@@ -10,7 +10,9 @@ import {
   type SignupTermId,
   signupTerms,
 } from '@/app/_model/signup-terms';
-import { Button, Checkbox, Icon, ModalTitle, TextLink } from '@/shared/ui';
+import { Button, Checkbox, Icon, ModalTitle } from '@/shared/ui';
+
+import { SignupLoginLink } from './signup-login-link';
 
 export interface SignupTermsStepProps {
   /** 동의한 약관 id 목록 */
@@ -106,12 +108,7 @@ export function SignupTermsStep({
         다음
       </Button>
 
-      <p className="flex items-baseline justify-center gap-8">
-        <span className="text-caption-c1 [color:var(--td-color-text-tertiary)]">
-          이미 계정이 있으신가요?
-        </span>
-        <TextLink href={loginHref}>로그인</TextLink>
-      </p>
+      <SignupLoginLink href={loginHref} />
     </>
   );
 }
