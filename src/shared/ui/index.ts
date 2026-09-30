@@ -18,6 +18,8 @@ export type { IconName, IconProps, IconTone } from './icon';
 export { Icon } from './icon';
 export type { IconButtonProps } from './icon-button';
 export { IconButton } from './icon-button';
+export type { ModalProps, ModalTitleProps } from './modal';
+export { Modal, ModalTitle } from './modal';
 export type { PasswordInputProps } from './password-input';
 export { PasswordInput } from './password-input';
 export type { SocialLoginButtonProps } from './social-login-button';
