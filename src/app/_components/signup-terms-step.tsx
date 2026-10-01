@@ -28,7 +28,7 @@ export interface SignupTermsStepProps {
 }
 
 /**
- * 회원가입 모달의 약관 동의 단계입니다. `Modal` 안에서 사용합니다.
+ * 회원가입 모달의 약관 동의 단계입니다. Modal 안에서 사용합니다.
  *
  * @example
  * ```tsx
