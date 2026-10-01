@@ -5,6 +5,7 @@ import { expect, fn, screen, userEvent, within } from 'storybook/test';
 import { type SignupTermId } from '@/app/_model/signup-terms';
 import { Modal } from '@/shared/ui';
 
+import { SignupModalLogo } from './signup-modal-logo';
 import { SignupTermsStep, type SignupTermsStepProps } from './signup-terms-step';
 
 const meta = {
@@ -31,7 +32,7 @@ function StepInModal({ agreedIds: initialAgreedIds, ...args }: SignupTermsStepPr
   const [agreedIds, setAgreedIds] = useState<SignupTermId[]>([...initialAgreedIds]);
 
   return (
-    <Modal defaultOpen>
+    <Modal defaultOpen logo={<SignupModalLogo />}>
       <SignupTermsStep
         {...args}
         agreedIds={agreedIds}

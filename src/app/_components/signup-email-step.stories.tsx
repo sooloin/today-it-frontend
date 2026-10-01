@@ -5,6 +5,7 @@ import { expect, fn, screen, userEvent, within } from 'storybook/test';
 import { Modal } from '@/shared/ui';
 
 import { SignupEmailStep, type SignupEmailStepProps } from './signup-email-step';
+import { SignupModalLogo } from './signup-modal-logo';
 
 const meta = {
   title: 'App/Signup/SignupEmailStep',
@@ -36,7 +37,7 @@ function StepInModal({ code: initialCode, email: initialEmail, ...args }: Signup
   const [code, setCode] = useState(initialCode);
 
   return (
-    <Modal defaultOpen>
+    <Modal defaultOpen logo={<SignupModalLogo />}>
       <SignupEmailStep
         {...args}
         code={code}
@@ -111,12 +112,12 @@ export const EmailRegisteredWithSocial: Story = {
 };
 
 export const CodeRequested: Story = {
-  args: { phase: 'code', email: 'wowowoooo@gmail.com', timerSeconds: 180 },
+  args: { phase: 'code', email: 'wowowoooo@gmail.com', timerSeconds: 300 },
   render,
 };
 
 export const CodeFilled: Story = {
-  args: { phase: 'code', email: 'wowowoooo@gmail.com', code: '123456', timerSeconds: 152 },
+  args: { phase: 'code', email: 'wowowoooo@gmail.com', code: '123456', timerSeconds: 272 },
   render,
 };
 
@@ -126,7 +127,7 @@ export const CodeInvalid: Story = {
     email: 'wowowoooo@gmail.com',
     code: '010000',
     codeError: 'invalid',
-    timerSeconds: 152,
+    timerSeconds: 272,
   },
   render,
 };
@@ -143,7 +144,7 @@ export const CodeExpired: Story = {
 };
 
 export const VerifyCode: Story = {
-  args: { phase: 'code', email: 'wowowoooo@gmail.com', timerSeconds: 180 },
+  args: { phase: 'code', email: 'wowowoooo@gmail.com', timerSeconds: 300 },
   render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
