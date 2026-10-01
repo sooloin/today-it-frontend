@@ -55,7 +55,11 @@ export function Modal({
           )}
           data-slot="modal"
         >
-          {logo}
+          {logo ? (
+            <div className="flex justify-center" data-slot="modal-logo">
+              {logo}
+            </div>
+          ) : null}
           {children}
           <DialogPrimitive.Close
             render={
@@ -74,7 +78,7 @@ export interface ModalTitleProps extends DialogPrimitive.Title.Props {
 }
 
 /**
- * Modal제목, Modal의 접근성 이름으로 사용됩니다.
+ * Modal의 제목입니다. Modal의 접근성 이름으로 사용됩니다.
  *
  * @example
  * ```tsx

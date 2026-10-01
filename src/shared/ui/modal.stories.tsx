@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { Button } from './button';
+import { Logo } from './logo';
 import { Modal, ModalTitle } from './modal';
 
 const meta = {
@@ -24,21 +25,18 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   render: (args) => (
-    <Modal {...args}>
+    <Modal {...args} logo={<Logo />}>
       <ModalTitle>회원가입을 위해 약관에 동의해주세요</ModalTitle>
       <Button>다음</Button>
     </Modal>
   ),
 };
 
-export const WithLogo: Story = {
+export const WithoutLogo: Story = {
   render: (args) => (
-    <Modal
-      {...args}
-      logo={<p className="text-center text-heading-h1 text-text-primary">ToDayIt</p>}
-    >
-      <ModalTitle>회원가입을 위해 약관에 동의해주세요</ModalTitle>
-      <Button>다음</Button>
+    <Modal {...args}>
+      <ModalTitle>로고 없이 표시해요</ModalTitle>
+      <Button>확인</Button>
     </Modal>
   ),
 };
@@ -117,7 +115,13 @@ export const KeepOpenOnScrimClick: Story = {
   play: async () => {
     const dialog = await screen.findByRole('dialog', { name: '바깥을 눌러도 닫히지 않아요' });
 
-    await userEvent.click(document.querySelector('[data-slot="modal-backdrop"]') as HTMLElement);
+    const backdrop = document.querySelector<HTMLElement>('[data-slot="modal-backdrop"]');
+
+    if (!backdrop) {
+      throw new Error('Modal 스크림을 찾을 수 없어요.');
+    }
+
+    await userEvent.click(backdrop);
 
     await expect(dialog).toBeVisible();
   },
