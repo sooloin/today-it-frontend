@@ -2,10 +2,9 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { useState } from 'react';
 import { expect, fn, screen, userEvent, within } from 'storybook/test';
 
-import { Modal } from '@/shared/ui';
+import { Logo, Modal } from '@/shared/ui';
 
 import { SignupEmailStep, type SignupEmailStepProps } from './signup-email-step';
-import { SignupModalLogo } from './signup-modal-logo';
 
 const meta = {
   title: 'App/Signup/SignupEmailStep',
@@ -37,7 +36,7 @@ function StepInModal({ code: initialCode, email: initialEmail, ...args }: Signup
   const [code, setCode] = useState(initialCode);
 
   return (
-    <Modal defaultOpen logo={<SignupModalLogo />}>
+    <Modal defaultOpen logo={<Logo />}>
       <SignupEmailStep
         {...args}
         code={code}

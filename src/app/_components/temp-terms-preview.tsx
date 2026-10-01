@@ -5,11 +5,10 @@ import { useState } from 'react';
 import { type SignupCodeError, type SignupEmailServerError } from '@/app/_model/signup-email';
 import { type SignupTermId } from '@/app/_model/signup-terms';
 import { useCountdown } from '@/app/_model/use-countdown';
-import { Button, Modal } from '@/shared/ui';
+import { Button, Logo, Modal } from '@/shared/ui';
 
-import { type SignupEmailPhase, SignupEmailStep } from './signup-email-step';
-import { SignupModalLogo } from './signup-modal-logo';
-import { SignupTermsStep } from './signup-terms-step';
+import { type SignupEmailPhase, SignupEmailStep } from './signup/signup-email-step';
+import { SignupTermsStep } from './signup/signup-terms-step';
 
 /**
  * 임시 확인용 컴포넌트입니다. 회원가입 모달 조립 시 삭제합니다.
@@ -66,7 +65,7 @@ export function TempTermsPreview() {
       <Button onClick={() => setOpen(true)} size="md">
         시작하기
       </Button>
-      <Modal logo={<SignupModalLogo />} onOpenChange={setOpen} open={open}>
+      <Modal logo={<Logo />} onOpenChange={setOpen} open={open}>
         {step === 'terms' ? (
           <SignupTermsStep
             agreedIds={agreedIds}

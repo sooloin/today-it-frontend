@@ -56,7 +56,7 @@ export function SignupTermsStep({
     <>
       <ModalTitle>회원가입을 위해 약관에 동의해주세요</ModalTitle>
 
-      <div className="flex flex-col gap-16" data-slot="signup-terms">
+      <div className="flex flex-col gap-16">
         <label className="flex cursor-pointer items-center gap-10">
           <Checkbox
             aria-labelledby={allLabelId}

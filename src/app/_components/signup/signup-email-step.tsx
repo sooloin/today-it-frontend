@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, type ReactNode, useId, useState } from 'react';
 
 import {
   isCodeComplete,
@@ -10,6 +10,7 @@ import {
   signupEmailErrorMessages,
   type SignupEmailServerError,
 } from '@/app/_model/signup-email';
+import { cn } from '@/shared/lib';
 import { Button, CodeInput, Divider, ModalTitle, SocialLoginButton, TextInput } from '@/shared/ui';
 
 import { SignupLoginLink } from './signup-login-link';
@@ -44,6 +45,26 @@ export interface SignupEmailStepProps {
   onSocialLogin?: (provider: SignupSocialProvider) => void;
   /** 이미 계정이 있는 사용자가 이동할 로그인 경로 */
   loginHref: string;
+}
+
+function FieldError({
+  children,
+  className,
+  id,
+}: {
+  children: ReactNode;
+  className?: string;
+  id?: string;
+}) {
+  return (
+    <p
+      className={cn('text-caption-c1 [color:var(--td-color-text-error)]', className)}
+      id={id}
+      role="alert"
+    >
+      {children}
+    </p>
+  );
 }
 
 /**
@@ -86,7 +107,6 @@ export function SignupEmailStep({
 }: SignupEmailStepProps) {
   const emailErrorId = useId();
   const codeErrorId = useId();
-  const socialErrorId = useId();
   const [showFormatError, setShowFormatError] = useState(false);
   const isCodePhase = phase === 'code';
 
@@ -146,15 +166,7 @@ export function SignupEmailStep({
           value={email}
         />
 
-        {emailErrorMessage ? (
-          <p
-            className="text-caption-c1 [color:var(--td-color-text-error)]"
-            id={emailErrorId}
-            role="alert"
-          >
-            {emailErrorMessage}
-          </p>
-        ) : null}
+        {emailErrorMessage ? <FieldError id={emailErrorId}>{emailErrorMessage}</FieldError> : null}
 
         {isCodePhase ? (
           <>
@@ -169,15 +181,7 @@ export function SignupEmailStep({
               value={code}
             />
 
-            {codeErrorMessage ? (
-              <p
-                className="text-caption-c1 [color:var(--td-color-text-error)]"
-                id={codeErrorId}
-                role="alert"
-              >
-                {codeErrorMessage}
-              </p>
-            ) : null}
+            {codeErrorMessage ? <FieldError id={codeErrorId}>{codeErrorMessage}</FieldError> : null}
 
             <p className="flex items-baseline justify-center gap-8">
               <span className="text-caption-c1 [color:var(--td-color-text-tertiary)]">
@@ -207,13 +211,7 @@ export function SignupEmailStep({
       </div>
 
       {socialErrorMessage ? (
-        <p
-          className="text-center text-caption-c1 [color:var(--td-color-text-error)]"
-          id={socialErrorId}
-          role="alert"
-        >
-          {socialErrorMessage}
-        </p>
+        <FieldError className="text-center">{socialErrorMessage}</FieldError>
       ) : null}
 
       <SignupLoginLink href={loginHref} />
