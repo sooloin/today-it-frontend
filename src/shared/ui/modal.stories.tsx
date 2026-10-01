@@ -31,6 +31,18 @@ export const Default: Story = {
   ),
 };
 
+export const WithLogo: Story = {
+  render: (args) => (
+    <Modal
+      {...args}
+      logo={<p className="text-center text-heading-h1 text-text-primary">ToDayIt</p>}
+    >
+      <ModalTitle>회원가입을 위해 약관에 동의해주세요</ModalTitle>
+      <Button>다음</Button>
+    </Modal>
+  ),
+};
+
 export const OpenAndClose: Story = {
   args: {
     defaultOpen: false,
@@ -92,5 +104,21 @@ export const CloseWithEscape: Story = {
     await screen.findByRole('dialog', { name: 'ESC로 닫기' });
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  },
+};
+
+export const KeepOpenOnScrimClick: Story = {
+  render: (args) => (
+    <Modal {...args}>
+      <ModalTitle>바깥을 눌러도 닫히지 않아요</ModalTitle>
+      <Button>확인</Button>
+    </Modal>
+  ),
+  play: async () => {
+    const dialog = await screen.findByRole('dialog', { name: '바깥을 눌러도 닫히지 않아요' });
+
+    await userEvent.click(document.querySelector('[data-slot="modal-backdrop"]') as HTMLElement);
+
+    await expect(dialog).toBeVisible();
   },
 };
