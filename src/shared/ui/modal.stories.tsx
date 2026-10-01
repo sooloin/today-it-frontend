@@ -69,7 +69,7 @@ export const OpenAndClose: Story = {
       name: '회원가입을 위해 약관에 동의해주세요',
     });
 
-    await expect(dialog).toBeVisible();
+    await waitFor(() => expect(dialog).toBeVisible());
 
     await userEvent.click(within(dialog).getByRole('button', { name: '닫기' }));
 
@@ -121,8 +121,12 @@ export const KeepOpenOnScrimClick: Story = {
       throw new Error('Modal 스크림을 찾을 수 없어요.');
     }
 
+    await waitFor(() => expect(dialog).toBeVisible());
     await userEvent.click(backdrop);
 
+    // 닫힘 애니메이션(150ms)이 끝나고도 열려 있는지 확인합니다.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await expect(dialog).toBeInTheDocument();
     await expect(dialog).toBeVisible();
   },
 };
