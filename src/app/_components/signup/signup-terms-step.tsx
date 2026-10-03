@@ -97,7 +97,7 @@ export function SignupTermsStep({
                 onClick={() => onViewTerms?.(term.id)}
                 type="button"
               >
-                <Icon name="chevron-forward" size={16} tone="inherit" />
+                <Icon name="chevron-right" size={16} tone="inherit" />
               </button>
             </div>
           );

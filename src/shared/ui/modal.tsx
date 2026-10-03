@@ -2,7 +2,8 @@ import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/shared/lib';
-import { IconButton } from '@/shared/ui/icon-button';
+
+import { IconButton } from './icon-button';
 
 export interface ModalProps extends Omit<DialogPrimitive.Root.Props, 'children'> {
   /** Modal 안에 표시할 내용. 접근성 이름을 위해 `ModalTitle`을 포함해야 합니다. */
