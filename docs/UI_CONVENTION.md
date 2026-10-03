@@ -138,6 +138,8 @@ export type { IconName, IconProps, IconTone } from './icon';
 
 - 클래스 조합은 `shared/lib`의 `cn`으로 통일한다.
 - 전역 스타일과 디자인 토큰은 `src/app/globals.css`에서 관리한다.
+- 디자인 토큰은 [TODAYIT Figma 변수](https://www.figma.com/design/oj7rJurylzORPSuAsZPv3a/TODAYIT?node-id=274-434&var-set-id=274-477&view=variables)의 `primitive`·`semantic` 컬렉션에 맞춘다. 변수 이름의 `/`를 `-`로 바꾸고 `--td-` 접두사를 붙이며, 시맨틱 변수의 별칭 참조도 유지한다.
+- 색상과 크기 토큰은 `@theme inline`에 각각 `--color-*`, `--spacing-*`로 연결해 사용한다. 선택 상태의 텍스트, 테두리, 배경과 CTA 상태는 해당 시맨틱 색상을 사용한다.
 - 반복되는 스타일 규칙은 공용 UI 또는 명확한 스타일 추상화로 분리한다.
 
 ### 6.2 SVG 아이콘
@@ -191,3 +193,8 @@ export type { IconName, IconProps, IconTone } from './icon';
 - 키보드 및 접근성 기본 동작을 검증한다.
 - 신규 또는 변경 공용 UI의 Storybook 스토리를 확인한다.
 - 후속 페이지 기능에서 즉시 사용할 수 있는지 확인한다.
+
+### CTA 버튼
+
+- 주요 CTA에는 `Button variant="cta"`를 사용하며 화면당 최대 하나만 배치한다.
+- 폼 제출과 일반 동작은 기본 `Button`을 사용한다.
