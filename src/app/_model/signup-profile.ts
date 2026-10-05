@@ -1,0 +1,60 @@
+import { z } from 'zod';
+
+/** 서버 응답으로 표시하는 닉네임 결과. `duplicated`는 중복, `forbidden`은 사용할 수 없는 닉네임입니다. */
+export type SignupNicknameServerResult = 'available' | 'duplicated' | 'forbidden';
+/** 닉네임 검사 요청 중이면 `checking`, 아니면 서버 결과입니다. */
+export type SignupNicknameStatus = 'checking' | SignupNicknameServerResult;
+/** 서버 응답으로 표시하는 비밀번호 오류. `blocked`는 차단된 비밀번호입니다. */
+export type SignupPasswordServerError = 'blocked';
+
+export const signupNicknameMessages = {
+  length: '닉네임은 2~8자로 입력해 주세요.',
+  chars: '한글, 영문, 숫자만 사용할 수 있어요.',
+  space: '닉네임에는 공백을 사용할 수 없어요.',
+  duplicated: '이미 사용 중인 닉네임이에요.',
+  forbidden: '사용할 수 없는 닉네임이에요.',
+  available: '사용 가능한 닉네임이에요.',
+} as const;
+
+export const signupPasswordMessages = {
+  length: '비밀번호는 10자 이상으로 입력해주세요.',
+  blocked: '다른 비밀번호를 입력해주세요.',
+} as const;
+
+/** 닉네임의 최소·최대 글자 수 */
+const NICKNAME_MIN_LENGTH = 2;
+const NICKNAME_MAX_LENGTH = 8;
+/** 비밀번호의 최소·최대 글자 수 */
+const PASSWORD_MIN_LENGTH = 10;
+export const SIGNUP_PASSWORD_MAX_LENGTH = 128;
+
+// 먼저 실패한 규칙의 문구를 표시합니다. 한글은 완성형만 허용하고, 앞뒤 공백은 제거합니다.
+const nicknameSchema = z
+  .string()
+  .trim()
+  .min(NICKNAME_MIN_LENGTH, signupNicknameMessages.length)
+  .max(NICKNAME_MAX_LENGTH, signupNicknameMessages.length)
+  .refine((value) => !/\s/.test(value), signupNicknameMessages.space)
+  .refine((value) => /^[가-힣a-zA-Z0-9]*$/.test(value), signupNicknameMessages.chars);
+
+// 공백과 특수문자를 허용하고, 길이만 확인합니다. 128자 초과는 입력창의 maxLength로 막습니다.
+const passwordSchema = z
+  .string()
+  .min(PASSWORD_MIN_LENGTH, signupPasswordMessages.length)
+  .max(SIGNUP_PASSWORD_MAX_LENGTH, signupPasswordMessages.length);
+
+export const signupProfileSchema = z.object({
+  nickname: nicknameSchema,
+  password: passwordSchema,
+});
+
+export type SignupProfileValues = z.infer<typeof signupProfileSchema>;
+
+/**
+ * 닉네임이 클라이언트 규칙에 맞는지 확인합니다. 앞뒤 공백은 무시합니다.
+ *
+ * @param value 확인할 닉네임
+ */
+export function isValidNickname(value: string) {
+  return nicknameSchema.safeParse(value).success;
+}
