@@ -1,8 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { useState } from 'react';
 import { expect, fn, screen, userEvent, within } from 'storybook/test';
 
-import { type SignupTermId } from '@/app/_model/signup-terms';
 import { Logo, Modal } from '@/shared/ui';
 
 import { SignupTermsStep, type SignupTermsStepProps } from './signup-terms-step';
@@ -15,9 +13,7 @@ const meta = {
     layout: 'fullscreen',
   },
   args: {
-    agreedIds: [],
     loginHref: '/login',
-    onAgreedIdsChange: fn(),
     onNext: fn(),
     onViewTerms: fn(),
   },
@@ -27,19 +23,10 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-function StepInModal({ agreedIds: initialAgreedIds, ...args }: SignupTermsStepProps) {
-  const [agreedIds, setAgreedIds] = useState<SignupTermId[]>([...initialAgreedIds]);
-
+function StepInModal(args: SignupTermsStepProps) {
   return (
     <Modal defaultOpen logo={<Logo />}>
-      <SignupTermsStep
-        {...args}
-        agreedIds={agreedIds}
-        onAgreedIdsChange={(nextAgreedIds) => {
-          setAgreedIds(nextAgreedIds);
-          args.onAgreedIdsChange(nextAgreedIds);
-        }}
-      />
+      <SignupTermsStep {...args} />
     </Modal>
   );
 }
@@ -49,12 +36,12 @@ const render: Story['render'] = (args) => <StepInModal {...args} />;
 export const Default: Story = { render };
 
 export const RequiredAgreed: Story = {
-  args: { agreedIds: ['service', 'privacy'] },
+  args: { defaultAgreedIds: ['service', 'privacy'] },
   render,
 };
 
 export const AllAgreed: Story = {
-  args: { agreedIds: ['service', 'privacy', 'profile-image', 'preference'] },
+  args: { defaultAgreedIds: ['service', 'privacy', 'profile-image', 'preference'] },
   render,
 };
 
@@ -101,7 +88,7 @@ export const RequiredOnly: Story = {
 };
 
 export const UncheckOptionalReleasesAll: Story = {
-  args: { agreedIds: ['service', 'privacy', 'profile-image', 'preference'] },
+  args: { defaultAgreedIds: ['service', 'privacy', 'profile-image', 'preference'] },
   render,
   play: async () => {
     const dialog = await screen.findByRole('dialog');

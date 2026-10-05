@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export const signupTerms = [
   { id: 'service', label: '서비스 이용약관 동의', required: true },
   { id: 'privacy', label: '개인정보 수집·이용 동의', required: true },
@@ -51,3 +53,12 @@ export function setTermAgreed(
 export function setAllTermsAgreed(agreed: boolean): SignupTermId[] {
   return agreed ? signupTerms.map(({ id }) => id) : [];
 }
+
+/** 필수 약관에 모두 동의해야 통과하는 약관 동의 입력 스키마 */
+export const signupTermsSchema = z.object({
+  agreedIds: z
+    .array(z.custom<SignupTermId>())
+    .refine((agreedIds) => isRequiredTermsAgreed(agreedIds), '필수 약관에 동의해주세요.'),
+});
+
+export type SignupTermsValues = z.infer<typeof signupTermsSchema>;

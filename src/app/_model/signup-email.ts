@@ -18,19 +18,16 @@ export const signupCodeErrorMessages = {
   expired: '인증코드가 만료되었어요. 재전송 후 다시 입력해주세요.',
 } as const satisfies Record<SignupCodeError, string>;
 
-const emailSchema = z.email();
+/** 이메일 입력 스키마. 인증코드는 형식 검증 없이 값만 담고, 자릿수는 `isCodeComplete`로 확인합니다. */
+export const signupEmailSchema = z.object({
+  email: z.string().trim().pipe(z.email(signupEmailErrorMessages.format)),
+  code: z.string(),
+});
+
+export type SignupEmailValues = z.infer<typeof signupEmailSchema>;
 
 /** 인증코드의 숫자 자릿수 */
 const SIGNUP_CODE_LENGTH = 6;
-
-/**
- * 이메일 형식이 올바른지 확인합니다. 앞뒤 공백은 무시합니다.
- *
- * @param value 확인할 이메일
- */
-export function isValidEmail(value: string) {
-  return emailSchema.safeParse(value.trim()).success;
-}
 
 /**
  * 인증코드 6자리를 모두 입력했는지 확인합니다. `000 - 000` 형식의 구분자는 무시합니다.

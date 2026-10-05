@@ -1,18 +1,21 @@
 'use client';
 
-import { type FormEvent, type ReactNode, useId, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useId } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import {
   isCodeComplete,
-  isValidEmail,
   type SignupCodeError,
   signupCodeErrorMessages,
   signupEmailErrorMessages,
+  signupEmailSchema,
   type SignupEmailServerError,
+  type SignupEmailValues,
 } from '@/app/_model/signup-email';
-import { cn } from '@/shared/lib';
 import { Button, CodeInput, Divider, ModalTitle, SocialLoginButton, TextInput } from '@/shared/ui';
 
+import { SignupFieldMessage } from './signup-field-message';
 import { SignupLoginLink } from './signup-login-link';
 
 export type SignupEmailPhase = 'email' | 'code';
@@ -21,25 +24,25 @@ export type SignupSocialProvider = 'google' | 'kakao';
 export interface SignupEmailStepProps {
   /** 이메일 입력 단계인지, 인증코드 입력 단계인지 나타냅니다. */
   phase: SignupEmailPhase;
-  /** 입력한 이메일 */
-  email: string;
-  /** 이메일이 바뀔 때 호출되는 함수 */
-  onEmailChange: (email: string) => void;
-  /** 입력한 인증코드 */
-  code: string;
-  /** 인증코드가 바뀔 때 호출되는 함수 */
-  onCodeChange: (code: string) => void;
+  /** 이메일의 초기값 */
+  defaultEmail?: string;
+  /** 인증코드의 초기값 */
+  defaultCode?: string;
+  /** 이메일이 바뀔 때 호출되는 함수. 이전 서버 오류를 비우는 데 사용합니다. */
+  onEmailChange?: (email: string) => void;
+  /** 인증코드가 바뀔 때 호출되는 함수. 이전 서버 오류를 비우는 데 사용합니다. */
+  onCodeChange?: (code: string) => void;
   /** 인증코드의 남은 시간(초) */
   timerSeconds?: number;
   /** 서버 응답으로 받은 이메일 오류 */
   emailError?: SignupEmailServerError;
   /** 서버 응답으로 받은 인증코드 오류 */
   codeError?: SignupCodeError;
-  /** 올바른 이메일로 다음 버튼을 눌렀을 때 호출되는 함수 */
-  onRequestCode: () => void;
+  /** 올바른 이메일로 다음 버튼을 눌렀을 때 호출되는 함수. 앞뒤 공백을 제거한 이메일을 받습니다. */
+  onRequestCode: (email: string) => void;
   /** 인증코드 6자리를 입력하고 다음 버튼을 눌렀을 때 호출되는 함수 */
-  onVerifyCode: () => void;
-  /** 인증코드 재전송을 눌렀을 때 호출되는 함수 */
+  onVerifyCode: (code: string) => void;
+  /** 인증코드 재전송을 눌렀을 때 호출되는 함수. 입력한 인증코드는 비워집니다. */
   onResendCode: () => void;
   /** 소셜 로그인 버튼을 눌렀을 때 호출되는 함수 */
   onSocialLogin?: (provider: SignupSocialProvider) => void;
@@ -47,43 +50,20 @@ export interface SignupEmailStepProps {
   loginHref: string;
 }
 
-function FieldError({
-  children,
-  className,
-  id,
-}: {
-  children: ReactNode;
-  className?: string;
-  id?: string;
-}) {
-  return (
-    <p
-      className={cn('text-caption-c1 [color:var(--td-color-text-error)]', className)}
-      id={id}
-      role="alert"
-    >
-      {children}
-    </p>
-  );
-}
-
 /**
  * 회원가입 모달의 이메일 인증 단계입니다. `Modal` 안에서 사용합니다.
  *
  * 이메일을 입력하는 `email` 단계와, 이메일이 잠긴 채 인증코드를 입력하는 `code` 단계를 한 화면에서 보여줍니다.
- * 이메일 형식은 이 컴포넌트가 다음 버튼을 눌렀을 때 확인하고, 그 외 오류는 서버 응답을 props로 받아 표시합니다.
+ * 입력값과 이메일 형식 검증은 react-hook-form과 zod로 관리하며, 형식 오류는 다음 버튼을 눌렀을 때 표시합니다.
+ * 그 외 오류는 서버 응답을 props로 받아 표시합니다.
  *
  * @example
  * ```tsx
  * <Modal open={open} onOpenChange={setOpen}>
  *   <SignupEmailStep
- *     code={code}
- *     email={email}
  *     loginHref="/login"
- *     onCodeChange={setCode}
- *     onEmailChange={setEmail}
  *     onRequestCode={requestCode}
- *     onResendCode={requestCode}
+ *     onResendCode={resendCode}
  *     onVerifyCode={verifyCode}
  *     phase="email"
  *   />
@@ -91,9 +71,9 @@ function FieldError({
  * ```
  */
 export function SignupEmailStep({
-  code,
   codeError,
-  email,
+  defaultCode = '',
+  defaultEmail = '',
   emailError,
   loginHref,
   onCodeChange,
@@ -107,37 +87,25 @@ export function SignupEmailStep({
 }: SignupEmailStepProps) {
   const emailErrorId = useId();
   const codeErrorId = useId();
-  const [showFormatError, setShowFormatError] = useState(false);
+  const {
+    control,
+    formState: { errors, isSubmitted },
+    handleSubmit,
+    setValue,
+  } = useForm<SignupEmailValues>({
+    resolver: zodResolver(signupEmailSchema),
+    defaultValues: { email: defaultEmail, code: defaultCode },
+  });
+  const email = useWatch({ control, name: 'email' });
+  const code = useWatch({ control, name: 'code' });
   const isCodePhase = phase === 'code';
 
-  const emailErrorMessage = showFormatError
-    ? signupEmailErrorMessages.format
-    : emailError === 'registered'
-      ? signupEmailErrorMessages.registered
-      : undefined;
+  const emailErrorMessage =
+    (isSubmitted ? errors.email?.message : undefined) ??
+    (emailError === 'registered' ? signupEmailErrorMessages.registered : undefined);
   const socialErrorMessage = emailError === 'social' ? signupEmailErrorMessages.social : undefined;
   const codeErrorMessage = codeError ? signupCodeErrorMessages[codeError] : undefined;
   const isNextDisabled = isCodePhase ? !isCodeComplete(code) : email.trim() === '';
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (isNextDisabled) {
-      return;
-    }
-
-    if (isCodePhase) {
-      onVerifyCode();
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      setShowFormatError(true);
-      return;
-    }
-
-    onRequestCode();
-  }
 
   return (
     <>
@@ -148,40 +116,79 @@ export function SignupEmailStep({
       </p>
 
       {/* form은 레이아웃에 영향을 주지 않고, Enter 키 제출만 담당합니다. */}
-      <form className="contents" noValidate onSubmit={handleSubmit}>
-        <TextInput
-          aria-describedby={emailErrorMessage ? emailErrorId : undefined}
-          aria-invalid={emailErrorMessage !== undefined}
-          aria-label="이메일"
-          autoComplete="email"
-          className="w-full"
-          disabled={isCodePhase}
-          inputMode="email"
-          onValueChange={(value) => {
-            setShowFormatError(false);
-            onEmailChange(value);
-          }}
-          placeholder="이메일을 입력해주세요"
-          type="email"
-          value={email}
+      <form
+        className="contents"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+
+          if (isNextDisabled) {
+            return;
+          }
+
+          void handleSubmit((values) =>
+            isCodePhase ? onVerifyCode(values.code) : onRequestCode(values.email),
+          )(event);
+        }}
+      >
+        <Controller
+          control={control}
+          name="email"
+          render={({ field }) => (
+            <TextInput
+              aria-describedby={emailErrorMessage ? emailErrorId : undefined}
+              aria-invalid={emailErrorMessage !== undefined}
+              aria-label="이메일"
+              autoComplete="email"
+              className="w-full"
+              disabled={isCodePhase}
+              inputMode="email"
+              name={field.name}
+              onBlur={field.onBlur}
+              onValueChange={(value) => {
+                field.onChange(value);
+                onEmailChange?.(value);
+              }}
+              placeholder="이메일을 입력해주세요"
+              ref={field.ref}
+              type="email"
+              value={field.value}
+            />
+          )}
         />
 
-        {emailErrorMessage ? <FieldError id={emailErrorId}>{emailErrorMessage}</FieldError> : null}
+        {emailErrorMessage ? (
+          <SignupFieldMessage id={emailErrorId}>{emailErrorMessage}</SignupFieldMessage>
+        ) : null}
 
         {isCodePhase ? (
           <>
-            <CodeInput
-              aria-describedby={codeErrorMessage ? codeErrorId : undefined}
-              aria-invalid={codeErrorMessage !== undefined}
-              aria-label="인증코드"
-              autoFocus
-              className="w-full"
-              onValueChange={onCodeChange}
-              timerSeconds={timerSeconds}
-              value={code}
+            <Controller
+              control={control}
+              name="code"
+              render={({ field }) => (
+                <CodeInput
+                  aria-describedby={codeErrorMessage ? codeErrorId : undefined}
+                  aria-invalid={codeErrorMessage !== undefined}
+                  aria-label="인증코드"
+                  autoFocus
+                  className="w-full"
+                  name={field.name}
+                  onBlur={field.onBlur}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    onCodeChange?.(value);
+                  }}
+                  ref={field.ref}
+                  timerSeconds={timerSeconds}
+                  value={field.value}
+                />
+              )}
             />
 
-            {codeErrorMessage ? <FieldError id={codeErrorId}>{codeErrorMessage}</FieldError> : null}
+            {codeErrorMessage ? (
+              <SignupFieldMessage id={codeErrorId}>{codeErrorMessage}</SignupFieldMessage>
+            ) : null}
 
             <p className="flex items-baseline justify-center gap-8">
               <span className="text-caption-c1 [color:var(--td-color-text-tertiary)]">
@@ -189,7 +196,10 @@ export function SignupEmailStep({
               </span>
               <button
                 className="inline-flex cursor-pointer items-start bg-transparent p-0 text-body-b2 whitespace-nowrap [color:var(--td-color-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-border-active focus-visible:ring-offset-2"
-                onClick={onResendCode}
+                onClick={() => {
+                  setValue('code', '');
+                  onResendCode();
+                }}
                 type="button"
               >
                 재전송
@@ -211,7 +221,7 @@ export function SignupEmailStep({
       </div>
 
       {socialErrorMessage ? (
-        <FieldError className="text-center">{socialErrorMessage}</FieldError>
+        <SignupFieldMessage className="text-center">{socialErrorMessage}</SignupFieldMessage>
       ) : null}
 
       <SignupLoginLink href={loginHref} />
