@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+/** 이메일을 입력하는 단계인지, 인증코드를 입력하는 단계인지 나타냅니다. */
+export type SignupEmailPhase = 'email' | 'code';
 /** 클라이언트에서 확인하는 이메일 오류 */
 type SignupEmailClientError = 'format';
 /** 서버 응답으로 표시하는 이메일 오류. `registered`는 이미 가입, `social`은 소셜 로그인으로 가입된 이메일입니다. */
@@ -27,7 +29,10 @@ export const signupEmailSchema = z.object({
 export type SignupEmailValues = z.infer<typeof signupEmailSchema>;
 
 /** 인증코드의 숫자 자릿수 */
-const SIGNUP_CODE_LENGTH = 6;
+export const SIGNUP_CODE_LENGTH = 6;
+
+/** 인증코드의 유효 시간(초). 서버가 만료 시각을 내려주면 그 값으로 대체합니다. */
+export const SIGNUP_CODE_EXPIRES_SECONDS = 300;
 
 /**
  * 인증코드 6자리를 모두 입력했는지 확인합니다. `000 - 000` 형식의 구분자는 무시합니다.
