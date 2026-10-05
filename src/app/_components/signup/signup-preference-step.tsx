@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useId } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
+import { signupRequestErrorMessage } from '@/app/_model/signup-api';
 import {
   getDistrictOptions,
   setConceptSelected,
@@ -14,6 +15,8 @@ import {
 } from '@/app/_model/signup-preference';
 import { Button, Chip, Dropdown, ModalTitle, TextLink } from '@/shared/ui';
 
+import { SignupFieldMessage } from './signup-field-message';
+
 export interface SignupPreferenceStepProps {
   /** 선호 지역의 초기값 */
   defaultCity?: string;
@@ -21,6 +24,10 @@ export interface SignupPreferenceStepProps {
   defaultDistrict?: string;
   /** 선호 컨셉의 초기값 */
   defaultConcepts?: readonly string[];
+  /** 서버 요청이 진행 중인지 나타냅니다. 진행 중에는 선택 완료 버튼과 건너뛰기가 비활성화됩니다. */
+  isSubmitting?: boolean;
+  /** 서버 요청이 실패했는지 나타냅니다. 선택 완료를 다시 눌러 재시도합니다. */
+  requestError?: boolean;
   /** 지역, 구·군, 컨셉을 선택하고 선택 완료를 눌렀을 때 호출되는 함수 */
   onSubmit: (preference: SignupPreferenceValues) => void;
   /** 나중에 설정할게요를 눌렀을 때 호출되는 함수 */
@@ -44,8 +51,10 @@ export function SignupPreferenceStep({
   defaultCity = '',
   defaultConcepts = [],
   defaultDistrict = '',
+  isSubmitting = false,
   onSkip,
   onSubmit,
+  requestError = false,
 }: SignupPreferenceStepProps) {
   const regionLabelId = useId();
   const conceptLabelId = useId();
@@ -75,7 +84,9 @@ export function SignupPreferenceStep({
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
-          void handleSubmit((values) => onSubmit(values))(event);
+          if (!isSubmitting) {
+            void handleSubmit((values) => onSubmit(values))(event);
+          }
         }}
       >
         <p
@@ -148,13 +159,25 @@ export function SignupPreferenceStep({
           )}
         />
 
-        <Button className="w-full" disabled={!isValid} type="submit">
+        {requestError ? (
+          <SignupFieldMessage className="text-center">
+            {signupRequestErrorMessage}
+          </SignupFieldMessage>
+        ) : null}
+
+        <Button
+          aria-busy={isSubmitting}
+          className="w-full"
+          disabled={!isValid || isSubmitting}
+          type="submit"
+        >
           선택 완료
         </Button>
       </form>
 
       <div className="flex justify-center">
         <TextLink
+          disabled={isSubmitting}
           href="#"
           onClick={(event) => {
             event.preventDefault();

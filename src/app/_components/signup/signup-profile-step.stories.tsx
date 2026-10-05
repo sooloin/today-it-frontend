@@ -161,3 +161,23 @@ export const SubmitProfile: Story = {
     });
   },
 };
+
+export const Submitting: Story = {
+  args: {
+    defaultNickname: '또르끄막두',
+    nicknameStatus: 'available',
+    defaultPassword: 'godari13620',
+    isSubmitting: true,
+  },
+  render,
+};
+
+export const RequestError: Story = {
+  args: {
+    defaultNickname: '또르끄막두',
+    nicknameStatus: 'available',
+    defaultPassword: 'godari13620',
+    requestError: true,
+  },
+  render,
+};

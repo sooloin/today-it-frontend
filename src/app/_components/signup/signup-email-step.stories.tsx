@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, screen, userEvent, within } from 'storybook/test';
 
+import { SIGNUP_CODE_EXPIRES_SECONDS } from '@/app/_model/signup-email';
 import { Logo, Modal } from '@/shared/ui';
 
 import { SignupEmailStep, type SignupEmailStepProps } from './signup-email-step';
@@ -93,7 +94,11 @@ export const EmailRegisteredWithSocial: Story = {
 };
 
 export const CodeRequested: Story = {
-  args: { phase: 'code', defaultEmail: 'wowowoooo@gmail.com', timerSeconds: 300 },
+  args: {
+    phase: 'code',
+    defaultEmail: 'wowowoooo@gmail.com',
+    timerSeconds: SIGNUP_CODE_EXPIRES_SECONDS,
+  },
   render,
 };
 
@@ -130,7 +135,11 @@ export const CodeExpired: Story = {
 };
 
 export const VerifyCode: Story = {
-  args: { phase: 'code', defaultEmail: 'wowowoooo@gmail.com', timerSeconds: 300 },
+  args: {
+    phase: 'code',
+    defaultEmail: 'wowowoooo@gmail.com',
+    timerSeconds: SIGNUP_CODE_EXPIRES_SECONDS,
+  },
   render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
@@ -153,4 +162,14 @@ export const VerifyCode: Story = {
     await expect(args.onResendCode).toHaveBeenCalledTimes(1);
     await expect(code).toHaveValue('');
   },
+};
+
+export const Submitting: Story = {
+  args: { defaultEmail: 'wowowoooo@gmail.com', isSubmitting: true },
+  render,
+};
+
+export const RequestError: Story = {
+  args: { defaultEmail: 'wowowoooo@gmail.com', requestError: true },
+  render,
 };

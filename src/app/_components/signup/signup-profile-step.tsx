@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useId } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
+import { signupRequestErrorMessage } from '@/app/_model/signup-api';
 import {
   SIGNUP_PASSWORD_MAX_LENGTH,
   signupNicknameMessages,
@@ -33,6 +34,10 @@ export interface SignupProfileStepProps {
   onPasswordChange?: (password: string) => void;
   /** 서버 응답으로 받은 비밀번호 오류 */
   passwordError?: SignupPasswordServerError;
+  /** 서버 요청이 진행 중인지 나타냅니다. 진행 중에는 회원가입 버튼이 비활성화됩니다. */
+  isSubmitting?: boolean;
+  /** 서버 요청이 실패했는지 나타냅니다. 닉네임을 다시 입력하거나 회원가입을 다시 눌러 재시도합니다. */
+  requestError?: boolean;
   /** 닉네임이 사용 가능하고 입력이 검증을 통과했을 때 회원가입을 누르면 호출되는 함수 */
   onSubmit: (profile: SignupProfileValues) => void;
 }
@@ -59,12 +64,14 @@ export interface SignupProfileStepProps {
 export function SignupProfileStep({
   defaultNickname = '',
   defaultPassword = '',
+  isSubmitting = false,
   nicknameStatus,
   onCheckNickname,
   onNicknameChange,
   onPasswordChange,
   onSubmit,
   passwordError,
+  requestError = false,
 }: SignupProfileStepProps) {
   const nicknameMessageId = useId();
   const passwordMessageId = useId();
@@ -122,7 +129,7 @@ export function SignupProfileStep({
         onSubmit={(event) => {
           event.preventDefault();
 
-          if (!isSubmitDisabled) {
+          if (!isSubmitDisabled && !isSubmitting) {
             void handleSubmit((values) => onSubmit(values))(event);
           }
         }}
@@ -191,7 +198,18 @@ export function SignupProfileStep({
           ) : null}
         </div>
 
-        <Button className="w-full" disabled={isSubmitDisabled} type="submit">
+        {requestError ? (
+          <SignupFieldMessage className="text-center">
+            {signupRequestErrorMessage}
+          </SignupFieldMessage>
+        ) : null}
+
+        <Button
+          aria-busy={isSubmitting}
+          className="w-full"
+          disabled={isSubmitDisabled || isSubmitting}
+          type="submit"
+        >
           회원가입
         </Button>
       </form>

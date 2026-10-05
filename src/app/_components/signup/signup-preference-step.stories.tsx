@@ -167,3 +167,23 @@ export const Skip: Story = {
     await expect(args.onSubmit).not.toHaveBeenCalled();
   },
 };
+
+export const Submitting: Story = {
+  args: {
+    defaultCity: '부산',
+    defaultDistrict: '서면',
+    defaultConcepts: ['조용함', '로맨틱'],
+    isSubmitting: true,
+  },
+  render,
+};
+
+export const RequestError: Story = {
+  args: {
+    defaultCity: '부산',
+    defaultDistrict: '서면',
+    defaultConcepts: ['조용함', '로맨틱'],
+    requestError: true,
+  },
+  render,
+};

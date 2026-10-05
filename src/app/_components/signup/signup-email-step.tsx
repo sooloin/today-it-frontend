@@ -4,11 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useId } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
+import { signupRequestErrorMessage } from '@/app/_model/signup-api';
 import {
   isCodeComplete,
   type SignupCodeError,
   signupCodeErrorMessages,
   signupEmailErrorMessages,
+  type SignupEmailPhase,
   signupEmailSchema,
   type SignupEmailServerError,
   type SignupEmailValues,
@@ -18,7 +20,7 @@ import { Button, CodeInput, Divider, ModalTitle, SocialLoginButton, TextInput } 
 import { SignupFieldMessage } from './signup-field-message';
 import { SignupLoginLink } from './signup-login-link';
 
-export type SignupEmailPhase = 'email' | 'code';
+export type { SignupEmailPhase };
 export type SignupSocialProvider = 'google' | 'kakao';
 
 export interface SignupEmailStepProps {
@@ -46,6 +48,10 @@ export interface SignupEmailStepProps {
   onResendCode: () => void;
   /** 소셜 로그인 버튼을 눌렀을 때 호출되는 함수 */
   onSocialLogin?: (provider: SignupSocialProvider) => void;
+  /** 서버 요청이 진행 중인지 나타냅니다. 진행 중에는 다음 버튼과 재전송이 비활성화됩니다. */
+  isSubmitting?: boolean;
+  /** 서버 요청이 실패했는지 나타냅니다. 같은 버튼을 다시 눌러 재시도합니다. */
+  requestError?: boolean;
   /** 이미 계정이 있는 사용자가 이동할 로그인 경로 */
   loginHref: string;
 }
@@ -75,6 +81,7 @@ export function SignupEmailStep({
   defaultCode = '',
   defaultEmail = '',
   emailError,
+  isSubmitting = false,
   loginHref,
   onCodeChange,
   onEmailChange,
@@ -83,6 +90,7 @@ export function SignupEmailStep({
   onSocialLogin,
   onVerifyCode,
   phase,
+  requestError = false,
   timerSeconds,
 }: SignupEmailStepProps) {
   const emailErrorId = useId();
@@ -122,7 +130,7 @@ export function SignupEmailStep({
         onSubmit={(event) => {
           event.preventDefault();
 
-          if (isNextDisabled) {
+          if (isNextDisabled || isSubmitting) {
             return;
           }
 
@@ -195,7 +203,8 @@ export function SignupEmailStep({
                 인증코드를 못 받으셨나요?
               </span>
               <button
-                className="inline-flex cursor-pointer items-start bg-transparent p-0 text-body-b2 whitespace-nowrap [color:var(--td-color-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-border-active focus-visible:ring-offset-2"
+                className="inline-flex cursor-pointer items-start bg-transparent p-0 text-body-b2 whitespace-nowrap [color:var(--td-color-text-primary)] outline-none focus-visible:ring-2 focus-visible:ring-border-active focus-visible:ring-offset-2 disabled:cursor-default disabled:[color:var(--td-color-text-disabled)]"
+                disabled={isSubmitting}
                 onClick={() => {
                   setValue('code', '');
                   onResendCode();
@@ -208,7 +217,18 @@ export function SignupEmailStep({
           </>
         ) : null}
 
-        <Button className="w-full" disabled={isNextDisabled} type="submit">
+        {requestError ? (
+          <SignupFieldMessage className="text-center">
+            {signupRequestErrorMessage}
+          </SignupFieldMessage>
+        ) : null}
+
+        <Button
+          aria-busy={isSubmitting}
+          className="w-full"
+          disabled={isNextDisabled || isSubmitting}
+          type="submit"
+        >
           다음
         </Button>
       </form>
