@@ -3,12 +3,19 @@ import { expect, fn, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { Logo, Modal } from '@/shared/ui';
 
-import { SignupProfileStep, type SignupProfileStepProps } from './signup-profile-step';
+import { SignupProfileStep } from './signup-profile-step';
 
 const meta = {
   title: 'Features/Signup/SignupProfileStep',
   component: SignupProfileStep,
   tags: ['autodocs'],
+  decorators: [
+    (StoryComponent) => (
+      <Modal defaultOpen logo={<Logo />}>
+        <StoryComponent />
+      </Modal>
+    ),
+  ],
   parameters: {
     layout: 'fullscreen',
   },
@@ -24,51 +31,34 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-function StepInModal(args: SignupProfileStepProps) {
-  return (
-    <Modal defaultOpen logo={<Logo />}>
-      <SignupProfileStep {...args} />
-    </Modal>
-  );
-}
-
-const render: Story['render'] = (args) => <StepInModal {...args} />;
-
-export const Default: Story = { render };
+export const Default: Story = {};
 
 export const NicknameAvailable: Story = {
   args: { defaultNickname: '또르끄막두', nicknameStatus: 'available' },
-  render,
 };
 
 export const NicknameChecking: Story = {
   args: { defaultNickname: '또르끄막두', nicknameStatus: 'checking' },
-  render,
 };
 
 export const NicknameLengthError: Story = {
   args: { defaultNickname: '아아아아아아아아아' },
-  render,
 };
 
 export const NicknameCharsError: Story = {
   args: { defaultNickname: '!@#$$(@' },
-  render,
 };
 
 export const NicknameSpaceError: Story = {
   args: { defaultNickname: '또르끄 막두' },
-  render,
 };
 
 export const NicknameDuplicated: Story = {
   args: { defaultNickname: '또르끄막두', nicknameStatus: 'duplicated' },
-  render,
 };
 
 export const NicknameForbidden: Story = {
   args: { defaultNickname: '시스템관리자', nicknameStatus: 'forbidden' },
-  render,
 };
 
 export const PasswordFilled: Story = {
@@ -77,7 +67,6 @@ export const PasswordFilled: Story = {
     nicknameStatus: 'available',
     defaultPassword: 'godari13620',
   },
-  render,
 };
 
 export const PasswordBlocked: Story = {
@@ -87,11 +76,9 @@ export const PasswordBlocked: Story = {
     defaultPassword: '1234567890',
     passwordError: 'blocked',
   },
-  render,
 };
 
 export const NicknameValidation: Story = {
-  render,
   play: async () => {
     const dialog = await screen.findByRole('dialog');
     const nickname = within(dialog).getByRole('textbox', { name: '닉네임' });
@@ -122,7 +109,6 @@ export const NicknameValidation: Story = {
 };
 
 export const CheckNicknameAfterTyping: Story = {
-  render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
     const nickname = within(dialog).getByRole('textbox', { name: '닉네임' });
@@ -137,7 +123,6 @@ export const CheckNicknameAfterTyping: Story = {
 
 export const SubmitProfile: Story = {
   args: { defaultNickname: '또르끄막두', nicknameStatus: 'available' },
-  render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
     const submit = within(dialog).getByRole('button', { name: '회원가입' });
@@ -169,7 +154,6 @@ export const Submitting: Story = {
     defaultPassword: 'godari13620',
     isSubmitting: true,
   },
-  render,
 };
 
 export const RequestError: Story = {
@@ -179,5 +163,4 @@ export const RequestError: Story = {
     defaultPassword: 'godari13620',
     requestError: true,
   },
-  render,
 };

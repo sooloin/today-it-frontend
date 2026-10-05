@@ -4,12 +4,19 @@ import { expect, fn, screen, userEvent, within } from 'storybook/test';
 import { SIGNUP_CODE_EXPIRES_SECONDS } from '@/features/signup/model/signup-email';
 import { Logo, Modal } from '@/shared/ui';
 
-import { SignupEmailStep, type SignupEmailStepProps } from './signup-email-step';
+import { SignupEmailStep } from './signup-email-step';
 
 const meta = {
   title: 'Features/Signup/SignupEmailStep',
   component: SignupEmailStep,
   tags: ['autodocs'],
+  decorators: [
+    (StoryComponent) => (
+      <Modal defaultOpen logo={<Logo />}>
+        <StoryComponent />
+      </Modal>
+    ),
+  ],
   parameters: {
     layout: 'fullscreen',
   },
@@ -29,25 +36,13 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-function StepInModal(args: SignupEmailStepProps) {
-  return (
-    <Modal defaultOpen logo={<Logo />}>
-      <SignupEmailStep {...args} />
-    </Modal>
-  );
-}
-
-const render: Story['render'] = (args) => <StepInModal {...args} />;
-
-export const Default: Story = { render };
+export const Default: Story = {};
 
 export const EmailFilled: Story = {
   args: { defaultEmail: 'wowowoooo@gmail.com' },
-  render,
 };
 
 export const EmailFormatError: Story = {
-  render,
   play: async () => {
     const dialog = await screen.findByRole('dialog');
     const email = within(dialog).getByRole('textbox', { name: '이메일' });
@@ -70,7 +65,6 @@ export const EmailFormatError: Story = {
 };
 
 export const RequestCode: Story = {
-  render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
 
@@ -85,12 +79,10 @@ export const RequestCode: Story = {
 
 export const EmailAlreadyRegistered: Story = {
   args: { defaultEmail: 'poppop@gmail.com', emailError: 'registered' },
-  render,
 };
 
 export const EmailRegisteredWithSocial: Story = {
   args: { defaultEmail: 'poppop@gmail.com', emailError: 'social' },
-  render,
 };
 
 export const CodeRequested: Story = {
@@ -99,7 +91,6 @@ export const CodeRequested: Story = {
     defaultEmail: 'wowowoooo@gmail.com',
     timerSeconds: SIGNUP_CODE_EXPIRES_SECONDS,
   },
-  render,
 };
 
 export const CodeFilled: Story = {
@@ -109,7 +100,6 @@ export const CodeFilled: Story = {
     defaultCode: '123456',
     timerSeconds: 272,
   },
-  render,
 };
 
 export const CodeInvalid: Story = {
@@ -120,7 +110,6 @@ export const CodeInvalid: Story = {
     codeError: 'invalid',
     timerSeconds: 272,
   },
-  render,
 };
 
 export const CodeExpired: Story = {
@@ -131,7 +120,6 @@ export const CodeExpired: Story = {
     codeError: 'expired',
     timerSeconds: 0,
   },
-  render,
 };
 
 export const VerifyCode: Story = {
@@ -140,7 +128,6 @@ export const VerifyCode: Story = {
     defaultEmail: 'wowowoooo@gmail.com',
     timerSeconds: SIGNUP_CODE_EXPIRES_SECONDS,
   },
-  render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
     const next = within(dialog).getByRole('button', { name: '다음' });
@@ -166,10 +153,8 @@ export const VerifyCode: Story = {
 
 export const Submitting: Story = {
   args: { defaultEmail: 'wowowoooo@gmail.com', isSubmitting: true },
-  render,
 };
 
 export const RequestError: Story = {
   args: { defaultEmail: 'wowowoooo@gmail.com', requestError: true },
-  render,
 };

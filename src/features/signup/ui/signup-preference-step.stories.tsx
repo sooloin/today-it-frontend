@@ -3,12 +3,19 @@ import { expect, fn, screen, userEvent, within } from 'storybook/test';
 
 import { Logo, Modal } from '@/shared/ui';
 
-import { SignupPreferenceStep, type SignupPreferenceStepProps } from './signup-preference-step';
+import { SignupPreferenceStep } from './signup-preference-step';
 
 const meta = {
   title: 'Features/Signup/SignupPreferenceStep',
   component: SignupPreferenceStep,
   tags: ['autodocs'],
+  decorators: [
+    (StoryComponent) => (
+      <Modal defaultOpen logo={<Logo />}>
+        <StoryComponent />
+      </Modal>
+    ),
+  ],
   parameters: {
     layout: 'fullscreen',
   },
@@ -22,31 +29,19 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-function StepInModal(args: SignupPreferenceStepProps) {
-  return (
-    <Modal defaultOpen logo={<Logo />}>
-      <SignupPreferenceStep {...args} />
-    </Modal>
-  );
-}
-
-const render: Story['render'] = (args) => <StepInModal {...args} />;
-
 async function choose(dialog: HTMLElement, name: string, option: string) {
   await userEvent.click(within(dialog).getByRole('combobox', { name }));
   await userEvent.click(await screen.findByRole('option', { name: option }));
 }
 
-export const Default: Story = { render };
+export const Default: Story = {};
 
 export const CitySelected: Story = {
   args: { defaultCity: '부산' },
-  render,
 };
 
 export const RegionSelected: Story = {
   args: { defaultCity: '부산', defaultDistrict: '서면' },
-  render,
 };
 
 export const AllSelected: Story = {
@@ -55,11 +50,9 @@ export const AllSelected: Story = {
     defaultDistrict: '서면',
     defaultConcepts: ['조용함', '로맨틱', '아늑함'],
   },
-  render,
 };
 
 export const CityOpen: Story = {
-  render,
   play: async () => {
     const dialog = await screen.findByRole('dialog');
 
@@ -73,7 +66,6 @@ export const CityOpen: Story = {
 
 export const DistrictOpen: Story = {
   args: { defaultCity: '부산' },
-  render,
   play: async () => {
     const dialog = await screen.findByRole('dialog');
 
@@ -86,7 +78,6 @@ export const DistrictOpen: Story = {
 };
 
 export const SelectRegion: Story = {
-  render,
   play: async () => {
     const dialog = await screen.findByRole('dialog');
     const district = within(dialog).getByRole('combobox', { name: '구/군' });
@@ -107,7 +98,6 @@ export const SelectRegion: Story = {
 
 export const SelectAllDistricts: Story = {
   args: { defaultCity: '부산', defaultConcepts: ['조용함'] },
-  render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
 
@@ -126,7 +116,6 @@ export const SelectAllDistricts: Story = {
 };
 
 export const SelectPreference: Story = {
-  render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
     const submit = within(dialog).getByRole('button', { name: '선택 완료' });
@@ -157,7 +146,6 @@ export const SelectPreference: Story = {
 };
 
 export const Skip: Story = {
-  render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
 
@@ -175,7 +163,6 @@ export const Submitting: Story = {
     defaultConcepts: ['조용함', '로맨틱'],
     isSubmitting: true,
   },
-  render,
 };
 
 export const RequestError: Story = {
@@ -185,5 +172,4 @@ export const RequestError: Story = {
     defaultConcepts: ['조용함', '로맨틱'],
     requestError: true,
   },
-  render,
 };

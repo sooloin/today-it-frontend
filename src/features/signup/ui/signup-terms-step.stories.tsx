@@ -3,12 +3,19 @@ import { expect, fn, screen, userEvent, within } from 'storybook/test';
 
 import { Logo, Modal } from '@/shared/ui';
 
-import { SignupTermsStep, type SignupTermsStepProps } from './signup-terms-step';
+import { SignupTermsStep } from './signup-terms-step';
 
 const meta = {
   title: 'Features/Signup/SignupTermsStep',
   component: SignupTermsStep,
   tags: ['autodocs'],
+  decorators: [
+    (StoryComponent) => (
+      <Modal defaultOpen logo={<Logo />}>
+        <StoryComponent />
+      </Modal>
+    ),
+  ],
   parameters: {
     layout: 'fullscreen',
   },
@@ -23,30 +30,17 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-function StepInModal(args: SignupTermsStepProps) {
-  return (
-    <Modal defaultOpen logo={<Logo />}>
-      <SignupTermsStep {...args} />
-    </Modal>
-  );
-}
-
-const render: Story['render'] = (args) => <StepInModal {...args} />;
-
-export const Default: Story = { render };
+export const Default: Story = {};
 
 export const RequiredAgreed: Story = {
   args: { defaultAgreedIds: ['service', 'privacy'] },
-  render,
 };
 
 export const AllAgreed: Story = {
   args: { defaultAgreedIds: ['service', 'privacy', 'profile-image', 'preference'] },
-  render,
 };
 
 export const AgreeAll: Story = {
-  render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
     const next = within(dialog).getByRole('button', { name: '다음' });
@@ -67,7 +61,6 @@ export const AgreeAll: Story = {
 };
 
 export const RequiredOnly: Story = {
-  render,
   play: async () => {
     const dialog = await screen.findByRole('dialog');
     const next = within(dialog).getByRole('button', { name: '다음' });
@@ -89,7 +82,6 @@ export const RequiredOnly: Story = {
 
 export const UncheckOptionalReleasesAll: Story = {
   args: { defaultAgreedIds: ['service', 'privacy', 'profile-image', 'preference'] },
-  render,
   play: async () => {
     const dialog = await screen.findByRole('dialog');
     const all = within(dialog).getByRole('checkbox', { name: '전체 동의합니다' });
@@ -108,7 +100,6 @@ export const UncheckOptionalReleasesAll: Story = {
 };
 
 export const ViewTerms: Story = {
-  render,
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
 
