@@ -6,8 +6,8 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { signupRequestErrorMessage } from '@/features/signup/model/signup-api';
 import {
+  getNicknameFeedback,
   SIGNUP_PASSWORD_MAX_LENGTH,
-  signupNicknameMessages,
   type SignupNicknameStatus,
   signupPasswordMessages,
   type SignupPasswordServerError,
@@ -83,16 +83,11 @@ export function SignupProfileStep({
   }, [defaultNickname, trigger]);
 
   const nicknameClientError = nickname === '' ? undefined : errors.nickname?.message;
-  const nicknameResult =
-    nicknameClientError === undefined && nicknameStatus !== 'checking' ? nicknameStatus : undefined;
-  const nicknameMessage =
-    nicknameClientError ??
-    (nicknameResult !== undefined ? signupNicknameMessages[nicknameResult] : undefined);
-  const isNicknameInvalid =
-    nicknameClientError !== undefined ||
-    nicknameResult === 'duplicated' ||
-    nicknameResult === 'forbidden';
-  const isNicknameAvailable = nicknameClientError === undefined && nicknameResult === 'available';
+  const {
+    isAvailable: isNicknameAvailable,
+    isInvalid: isNicknameInvalid,
+    message: nicknameMessage,
+  } = getNicknameFeedback(nicknameClientError, nicknameStatus);
 
   const passwordMessage =
     (isSubmitted ? errors.password?.message : undefined) ??

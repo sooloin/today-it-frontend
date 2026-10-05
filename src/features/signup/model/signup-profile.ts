@@ -51,3 +51,26 @@ export type SignupProfileValues = z.infer<typeof signupProfileSchema>;
 export function isValidNickname(value: string) {
   return nicknameSchema.safeParse(value).success;
 }
+
+/**
+ * 닉네임 입력창 아래에 보여줄 문구와 상태를 정합니다.
+ * 클라이언트 오류가 있으면 그 문구를, 없으면 서버 검사 결과를 따릅니다. 검사 중이거나 결과가 없으면 문구가 없습니다.
+ */
+export function getNicknameFeedback(
+  clientError: string | undefined,
+  status: SignupNicknameStatus | undefined,
+) {
+  if (clientError !== undefined) {
+    return { message: clientError, isInvalid: true, isAvailable: false };
+  }
+
+  if (status === undefined || status === 'checking') {
+    return { message: undefined, isInvalid: false, isAvailable: false };
+  }
+
+  return {
+    message: signupNicknameMessages[status],
+    isInvalid: status !== 'available',
+    isAvailable: status === 'available',
+  };
+}
