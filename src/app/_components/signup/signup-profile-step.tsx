@@ -123,7 +123,7 @@ export function SignupProfileStep({
           event.preventDefault();
 
           if (!isSubmitDisabled) {
-            void handleSubmit(onSubmit)(event);
+            void handleSubmit((values) => onSubmit(values))(event);
           }
         }}
       >

@@ -13,6 +13,7 @@ import { useCountdown } from '@/app/_model/use-countdown';
 import { Button, Logo, Modal } from '@/shared/ui';
 
 import { type SignupEmailPhase, SignupEmailStep } from './signup/signup-email-step';
+import { SignupPreferenceStep } from './signup/signup-preference-step';
 import { SignupProfileStep } from './signup/signup-profile-step';
 import { SignupTermsStep } from './signup/signup-terms-step';
 
@@ -25,7 +26,7 @@ import { SignupTermsStep } from './signup/signup-terms-step';
  */
 export function TempTermsPreview() {
   const [open, setOpen] = useState(true);
-  const [step, setStep] = useState<'terms' | 'email' | 'profile'>('terms');
+  const [step, setStep] = useState<'terms' | 'email' | 'profile' | 'preference'>('terms');
   const [agreedIds, setAgreedIds] = useState<SignupTermId[]>([]);
   const [phase, setPhase] = useState<SignupEmailPhase>('email');
   const [email, setEmail] = useState('');
@@ -83,7 +84,7 @@ export function TempTermsPreview() {
       return;
     }
 
-    setOpen(false);
+    setStep('preference');
   }
 
   return (
@@ -92,7 +93,9 @@ export function TempTermsPreview() {
         시작하기
       </Button>
       <Modal logo={<Logo />} onOpenChange={setOpen} open={open}>
-        {step === 'profile' ? (
+        {step === 'preference' ? (
+          <SignupPreferenceStep onSkip={() => setOpen(false)} onSubmit={() => setOpen(false)} />
+        ) : step === 'profile' ? (
           <SignupProfileStep
             nicknameStatus={nicknameStatus}
             onCheckNickname={checkNickname}
