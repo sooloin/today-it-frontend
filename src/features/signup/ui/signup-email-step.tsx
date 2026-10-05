@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useId } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
-import { signupRequestErrorMessage } from '@/app/_model/signup-api';
+import { signupRequestErrorMessage } from '@/features/signup/model/signup-api';
 import {
   isCodeComplete,
   type SignupCodeError,
@@ -14,14 +14,14 @@ import {
   signupEmailSchema,
   type SignupEmailServerError,
   type SignupEmailValues,
-} from '@/app/_model/signup-email';
+} from '@/features/signup/model/signup-email';
 import { Button, CodeInput, Divider, ModalTitle, SocialLoginButton, TextInput } from '@/shared/ui';
 
 import { SignupFieldMessage } from './signup-field-message';
 import { SignupLoginLink } from './signup-login-link';
 
 export type { SignupEmailPhase };
-export type SignupSocialProvider = 'google' | 'kakao';
+type SignupSocialProvider = 'google' | 'kakao';
 
 export interface SignupEmailStepProps {
   /** 이메일 입력 단계인지, 인증코드 입력 단계인지 나타냅니다. */
@@ -57,24 +57,8 @@ export interface SignupEmailStepProps {
 }
 
 /**
- * 회원가입 모달의 이메일 인증 단계입니다. `Modal` 안에서 사용합니다.
- *
- * 이메일을 입력하는 `email` 단계와, 이메일이 잠긴 채 인증코드를 입력하는 `code` 단계를 한 화면에서 보여줍니다.
- * 입력값과 이메일 형식 검증은 react-hook-form과 zod로 관리하며, 형식 오류는 다음 버튼을 눌렀을 때 표시합니다.
- * 그 외 오류는 서버 응답을 props로 받아 표시합니다.
- *
- * @example
- * ```tsx
- * <Modal open={open} onOpenChange={setOpen}>
- *   <SignupEmailStep
- *     loginHref="/login"
- *     onRequestCode={requestCode}
- *     onResendCode={resendCode}
- *     onVerifyCode={verifyCode}
- *     phase="email"
- *   />
- * </Modal>
- * ```
+ * 회원가입 모달의 이메일 인증 단계입니다. 이메일을 입력하는 `email` 단계와, 이메일이 잠긴 채
+ * 인증코드를 입력하는 `code` 단계를 한 화면에서 보여줍니다.
  */
 export function SignupEmailStep({
   codeError,
@@ -123,7 +107,7 @@ export function SignupEmailStep({
         입력해주신 이메일로 인증코드를 보내드려요.
       </p>
 
-      {/* form은 레이아웃에 영향을 주지 않고, Enter 키 제출만 담당합니다. */}
+      {/* contents: form이 레이아웃에 영향을 주지 않게 합니다. */}
       <form
         className="contents"
         noValidate

@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 
 import { cn } from '@/shared/lib';
 
-export interface SignupFieldMessageProps {
+interface SignupFieldMessageProps {
   children: ReactNode;
   className?: string;
   id?: string;

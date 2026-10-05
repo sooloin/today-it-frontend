@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useId } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
-import { signupRequestErrorMessage } from '@/app/_model/signup-api';
+import { signupRequestErrorMessage } from '@/features/signup/model/signup-api';
 import {
   getDistrictOptions,
   setConceptSelected,
@@ -12,7 +12,7 @@ import {
   signupPreferenceSchema,
   type SignupPreferenceValues,
   signupRegions,
-} from '@/app/_model/signup-preference';
+} from '@/features/signup/model/signup-preference';
 import { Button, Chip, Dropdown, ModalTitle, TextLink } from '@/shared/ui';
 
 import { SignupFieldMessage } from './signup-field-message';
@@ -35,17 +35,8 @@ export interface SignupPreferenceStepProps {
 }
 
 /**
- * 회원가입 모달의 선호 지역·컨셉 설정 단계입니다. `Modal` 안에서 사용합니다.
- *
- * 선택 사항이라 `onSkip`으로 건너뛸 수 있습니다. 구·군은 지역을 고른 뒤에 선택할 수 있고,
- * 지역을 바꾸면 선택한 구·군이 비워집니다. 입력값은 react-hook-form과 zod로 관리합니다.
- *
- * @example
- * ```tsx
- * <Modal open={open} onOpenChange={setOpen}>
- *   <SignupPreferenceStep onSkip={finish} onSubmit={savePreference} />
- * </Modal>
- * ```
+ * 회원가입 모달의 선호 지역·컨셉 설정 단계입니다. 선택 사항이라 `onSkip`으로 건너뛸 수 있고,
+ * 지역을 바꾸면 선택한 구·군이 비워집니다.
  */
 export function SignupPreferenceStep({
   defaultCity = '',
@@ -78,7 +69,6 @@ export function SignupPreferenceStep({
         취향에 맞는 코스를 추천해드릴게요.
       </p>
 
-      {/* form은 레이아웃에 영향을 주지 않고, 제출 동작만 담당합니다. */}
       <form
         className="contents"
         noValidate

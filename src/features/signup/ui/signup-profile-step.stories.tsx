@@ -6,7 +6,7 @@ import { Logo, Modal } from '@/shared/ui';
 import { SignupProfileStep, type SignupProfileStepProps } from './signup-profile-step';
 
 const meta = {
-  title: 'App/Signup/SignupProfileStep',
+  title: 'Features/Signup/SignupProfileStep',
   component: SignupProfileStep,
   tags: ['autodocs'],
   parameters: {

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 
-import { type SignupApi } from '@/app/_model/signup-api';
-import { createMockSignupApi } from '@/app/_model/signup-mock-api';
-import { useSignupSteps } from '@/app/_model/use-signup-steps';
+import { type SignupApi } from '@/features/signup/model/signup-api';
+import { createMockSignupApi } from '@/features/signup/model/signup-mock-api';
+import { useSignupSteps } from '@/features/signup/model/use-signup-steps';
 import { Logo, Modal } from '@/shared/ui';
 
 import { SignupEmailStep } from './signup-email-step';
@@ -27,9 +27,7 @@ export interface SignupModalProps {
 
 /**
  * 회원가입 모달입니다. 약관 동의, 이메일 인증, 프로필 설정, 선호 지역·컨셉 순서로 진행합니다.
- *
- * 모달을 닫으면 닫힘 애니메이션이 끝난 뒤 처음 단계로 돌아가고 입력과 오류가 모두 비워집니다.
- * 가입이 끝나면 `onComplete`를 호출하고 모달을 닫습니다.
+ * 닫으면 닫힘 애니메이션이 끝난 뒤 처음 단계로 돌아가고, 가입이 끝나면 `onComplete`를 호출하고 닫습니다.
  *
  * @example
  * ```tsx

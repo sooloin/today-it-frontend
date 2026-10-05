@@ -16,21 +16,17 @@ import {
 import { type SignupTermId } from './signup-terms';
 import { useCountdown } from './use-countdown';
 
-export type SignupStep = 'terms' | 'email' | 'profile' | 'preference';
+type SignupStep = 'terms' | 'email' | 'profile' | 'preference';
 
-export interface UseSignupStepsOptions {
-  /** 서버 요청 */
+interface UseSignupStepsOptions {
   api: SignupApi;
-  /** 선호 지역·컨셉을 저장하거나 건너뛰어 가입이 끝났을 때 호출되는 함수 */
+  /** 선호 지역·컨셉을 저장하거나 건너뛰어 가입이 끝났을 때 호출됩니다. */
   onComplete: () => void;
 }
 
 /**
- * 회원가입 모달의 단계 이동과 서버 요청 상태를 관리합니다.
- *
- * - 요청은 한 번에 하나만 보내며, 진행 중에는 `isSubmitting`이 `true`라 같은 요청을 다시 보내지 않습니다.
- * - 요청이 실패하면 `requestFailed`가 `true`가 되고, 같은 동작을 다시 실행해 재시도합니다.
- * - `reset`을 호출하면 처음 단계로 돌아가고 입력·오류·타이머를 비우며, 진행 중이던 요청의 응답은 무시합니다.
+ * 회원가입 모달의 단계 이동과 서버 요청 상태를 관리합니다. 요청은 한 번에 하나만 보내고,
+ * `reset`을 호출하면 처음 단계로 돌아가며 진행 중이던 요청의 응답은 무시합니다.
  */
 export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
   const [step, setStep] = useState<SignupStep>('terms');
@@ -50,12 +46,12 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     start: startCountdown,
   } = useCountdown(SIGNUP_CODE_EXPIRES_SECONDS);
 
-  // reset 이후에 도착한 응답을 무시하기 위한 번호입니다.
+  // reset 이후에 도착한 응답을 구분하는 번호입니다.
   const generationRef = useRef(0);
   const isSubmittingRef = useRef(false);
   const nicknameRequestRef = useRef(0);
 
-  /** 요청을 하나씩 실행합니다. 진행 중이면 무시하고, 실패하면 `requestFailed`를 켭니다. */
+  // 진행 중이면 무시하고, 실패하면 requestFailed를 켭니다.
   async function submit<T>(request: () => Promise<T>, onSuccess: (result: T) => void) {
     if (isSubmittingRef.current) {
       return;
@@ -160,14 +156,14 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     );
   }
 
-  /** 닉네임이 바뀌면 이전 검사 결과와 대기 중인 응답을 버립니다. */
+  // 닉네임이 바뀌면 이전 검사 결과와 대기 중인 응답을 버립니다.
   function changeNickname() {
     nicknameRequestRef.current += 1;
     setNicknameStatus(undefined);
     setRequestFailed(false);
   }
 
-  /** 닉네임 검사는 입력을 막지 않는 요청이라 가장 마지막 요청의 응답만 반영합니다. */
+  // 입력을 막지 않는 요청이라 가장 마지막 요청의 응답만 반영합니다.
   async function checkNickname(nickname: string) {
     const generation = generationRef.current;
     const requestId = (nicknameRequestRef.current += 1);

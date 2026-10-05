@@ -6,7 +6,7 @@ import { Logo, Modal } from '@/shared/ui';
 import { SignupPreferenceStep, type SignupPreferenceStepProps } from './signup-preference-step';
 
 const meta = {
-  title: 'App/Signup/SignupPreferenceStep',
+  title: 'Features/Signup/SignupPreferenceStep',
   component: SignupPreferenceStep,
   tags: ['autodocs'],
   parameters: {

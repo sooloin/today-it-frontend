@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, screen, userEvent, within } from 'storybook/test';
 
-import { SIGNUP_CODE_EXPIRES_SECONDS } from '@/app/_model/signup-email';
+import { SIGNUP_CODE_EXPIRES_SECONDS } from '@/features/signup/model/signup-email';
 import { Logo, Modal } from '@/shared/ui';
 
 import { SignupEmailStep, type SignupEmailStepProps } from './signup-email-step';
 
 const meta = {
-  title: 'App/Signup/SignupEmailStep',
+  title: 'Features/Signup/SignupEmailStep',
   component: SignupEmailStep,
   tags: ['autodocs'],
   parameters: {

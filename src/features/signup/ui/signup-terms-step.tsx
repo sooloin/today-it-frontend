@@ -13,7 +13,7 @@ import {
   signupTerms,
   signupTermsSchema,
   type SignupTermsValues,
-} from '@/app/_model/signup-terms';
+} from '@/features/signup/model/signup-terms';
 import { Button, Checkbox, Icon, ModalTitle } from '@/shared/ui';
 
 import { SignupLoginLink } from './signup-login-link';
@@ -29,18 +29,7 @@ export interface SignupTermsStepProps {
   loginHref: string;
 }
 
-/**
- * 회원가입 모달의 약관 동의 단계입니다. Modal 안에서 사용합니다.
- *
- * 동의 상태와 필수 약관 검증은 react-hook-form과 zod로 관리합니다.
- *
- * @example
- * ```tsx
- * <Modal open={open} onOpenChange={setOpen}>
- *   <SignupTermsStep loginHref="/login" onNext={goNext} />
- * </Modal>
- * ```
- */
+/** 회원가입 모달의 약관 동의 단계입니다. 필수 약관에 동의해야 다음으로 진행할 수 있습니다. */
 export function SignupTermsStep({
   defaultAgreedIds = [],
   loginHref,
@@ -59,7 +48,6 @@ export function SignupTermsStep({
     <>
       <ModalTitle>회원가입을 위해 약관에 동의해주세요</ModalTitle>
 
-      {/* form은 레이아웃에 영향을 주지 않고, 제출 동작만 담당합니다. */}
       <form
         className="contents"
         noValidate

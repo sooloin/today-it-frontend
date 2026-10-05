@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useId } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
-import { signupRequestErrorMessage } from '@/app/_model/signup-api';
+import { signupRequestErrorMessage } from '@/features/signup/model/signup-api';
 import {
   SIGNUP_PASSWORD_MAX_LENGTH,
   signupNicknameMessages,
@@ -13,8 +13,8 @@ import {
   type SignupPasswordServerError,
   signupProfileSchema,
   type SignupProfileValues,
-} from '@/app/_model/signup-profile';
-import { useNicknameCheckRequest } from '@/app/_model/use-nickname-check-request';
+} from '@/features/signup/model/signup-profile';
+import { useNicknameCheckRequest } from '@/features/signup/model/use-nickname-check-request';
 import { Avatar, Button, ModalTitle, PasswordInput, TextInput } from '@/shared/ui';
 
 import { SignupFieldMessage } from './signup-field-message';
@@ -43,23 +43,8 @@ export interface SignupProfileStepProps {
 }
 
 /**
- * 회원가입 모달의 프로필 설정 단계입니다. `Modal` 안에서 사용합니다.
- *
- * 입력값과 클라이언트 검증은 react-hook-form과 zod로 관리합니다. 닉네임은 입력할 때마다 확인하고,
- * 통과하면 입력이 멈춘 뒤 `onCheckNickname`을 호출합니다. 비밀번호 길이 오류는 회원가입을 누른 뒤부터 표시합니다.
- * 중복·금칙어·차단 비밀번호는 서버 응답을 props로 받아 표시합니다.
- *
- * @example
- * ```tsx
- * <Modal open={open} onOpenChange={setOpen}>
- *   <SignupProfileStep
- *     nicknameStatus={nicknameStatus}
- *     onCheckNickname={checkNickname}
- *     onNicknameChange={() => setNicknameStatus(undefined)}
- *     onSubmit={signup}
- *   />
- * </Modal>
- * ```
+ * 회원가입 모달의 프로필 설정 단계입니다. 닉네임은 입력할 때마다 검증하고, 통과하면 입력이 멈춘 뒤
+ * `onCheckNickname`을 호출합니다. 비밀번호 길이 오류는 회원가입을 누른 뒤부터 표시합니다.
  */
 export function SignupProfileStep({
   defaultNickname = '',
@@ -122,7 +107,6 @@ export function SignupProfileStep({
         <Avatar />
       </div>
 
-      {/* form은 레이아웃에 영향을 주지 않고, Enter 키 제출만 담당합니다. */}
       <form
         className="contents"
         noValidate
