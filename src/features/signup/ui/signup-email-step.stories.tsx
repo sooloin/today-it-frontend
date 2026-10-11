@@ -154,6 +154,13 @@ export const VerifyCode: Story = {
 
 export const Submitting: Story = {
   args: { defaultEmail: 'wowowoooo@gmail.com', isSubmitting: true },
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    // 요청 중에 이메일을 바꾸면 화면의 값과 실제 요청한 값이 달라지므로 입력을 막습니다.
+    await expect(within(dialog).getByRole('textbox', { name: '이메일' })).toBeDisabled();
+    await expect(within(dialog).getByRole('button', { name: '다음' })).toBeDisabled();
+  },
 };
 
 export const RequestError: Story = {

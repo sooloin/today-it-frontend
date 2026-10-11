@@ -133,7 +133,7 @@ export function SignupEmailStep({
               aria-label="이메일"
               autoComplete="email"
               className="w-full"
-              disabled={isCodePhase}
+              disabled={isCodePhase || isSubmitting}
               inputMode="email"
               name={field.name}
               onBlur={field.onBlur}
