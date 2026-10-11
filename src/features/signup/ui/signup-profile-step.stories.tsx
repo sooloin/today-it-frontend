@@ -143,8 +143,23 @@ export const SubmitProfile: Story = {
 
     await userEvent.type(password, '567890{Enter}');
     await expect(args.onSubmit).toHaveBeenCalledWith({
-      defaultNickname: '또르끄막두',
-      defaultPassword: '1234567890',
+      nickname: '또르끄막두',
+      password: '1234567890',
+    });
+  },
+};
+
+export const PasswordWithSpaceAndSymbols: Story = {
+  args: { defaultNickname: '또르끄막두', nicknameStatus: 'available' },
+  play: async ({ args }) => {
+    const dialog = await screen.findByRole('dialog');
+    const password = within(dialog).getByLabelText('비밀번호', { selector: 'input' });
+
+    // 공백과 특수문자가 있어도 길이만 맞으면 값을 그대로 제출합니다.
+    await userEvent.type(password, 'my pass word!!{Enter}');
+    await expect(args.onSubmit).toHaveBeenCalledWith({
+      nickname: '또르끄막두',
+      password: 'my pass word!!',
     });
   },
 };

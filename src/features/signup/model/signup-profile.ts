@@ -16,8 +16,8 @@ export const signupNicknameMessages = {
 } as const;
 
 export const signupPasswordMessages = {
-  length: '비밀번호는 10자 이상으로 입력해주세요.',
-  blocked: '다른 비밀번호를 입력해주세요.',
+  length: '비밀번호는 10자 이상 128자 이하로 입력해 주세요.',
+  blocked: '쉽게 추측되거나 유출된 비밀번호입니다. 다른 비밀번호를 입력해 주세요.',
 } as const;
 
 const NICKNAME_MIN_LENGTH = 2;
@@ -34,7 +34,7 @@ const nicknameSchema = z
   .refine((value) => !/\s/.test(value), signupNicknameMessages.space)
   .refine((value) => /^[가-힣a-zA-Z0-9]*$/.test(value), signupNicknameMessages.chars);
 
-// 길이만 확인합니다. 128자 초과는 입력창의 maxLength로 막습니다.
+// 길이만 확인합니다. 공백과 특수문자도 사용할 수 있어 값을 다듬지 않습니다. 128자 초과는 입력창의 maxLength로 막습니다.
 const passwordSchema = z
   .string()
   .min(PASSWORD_MIN_LENGTH, signupPasswordMessages.length)

@@ -7,8 +7,10 @@ import { type SignupApi } from './signup-api';
  * - 이메일: registered@test.com(이미 가입), social@test.com(소셜 가입), error@test.com(요청 실패)
  * - 인증코드: 111111(불일치), 000000(만료), 그 외 6자리는 성공
  * - 닉네임: 중복확인(중복), 시스템관리자(사용 불가), 그 외는 사용 가능
- * - 비밀번호: 1234567890(차단), errorerror1(요청 실패)
+ * - 비밀번호: 1234567890·qwertyuiop·password123(차단, 전체가 일치할 때만), errorerror1(요청 실패)
  */
+const blockedPasswords = ['1234567890', 'qwertyuiop', 'password123'];
+
 export function createMockSignupApi({ delayMs = 500 }: { delayMs?: number } = {}): SignupApi {
   const wait = () => new Promise<void>((resolve) => setTimeout(resolve, delayMs));
 
@@ -56,7 +58,7 @@ export function createMockSignupApi({ delayMs = 500 }: { delayMs?: number } = {}
         throw new Error('mock request failed');
       }
 
-      return password === '1234567890' ? 'blocked' : 'created';
+      return blockedPasswords.includes(password) ? 'blocked' : 'created';
     },
 
     async savePreference() {
