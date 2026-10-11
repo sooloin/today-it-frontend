@@ -98,13 +98,13 @@ export function SignupModal({ api, loginHref, onComplete, onOpenChange, open }: 
       ) : null}
 
       {flow.step === 'complete' ? (
-        <SignupCompleteStep onSkip={flow.skipPreference} onStartPreference={flow.startPreference} />
+        <SignupCompleteStep onSkip={flow.finishSignup} onStartPreference={flow.startPreference} />
       ) : null}
 
       {flow.step === 'preference' ? (
         <SignupPreferenceStep
           isSubmitting={flow.isSubmitting}
-          onSkip={flow.skipPreference}
+          onSkip={flow.finishSignup}
           onSubmit={flow.submitPreference}
           requestError={flow.requestFailed}
         />

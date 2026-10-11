@@ -208,7 +208,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     void submit(() => api.savePreference(preference), onComplete);
   }
 
-  function skipPreference() {
+  function finishSignup() {
     if (!isSubmittingRef.current) {
       onComplete();
     }
@@ -238,7 +238,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     submitProfile,
     startPreference,
     submitPreference,
-    skipPreference,
+    finishSignup,
     reset,
   };
 }
