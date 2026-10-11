@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { signupRequestErrorMessage } from '@/features/signup/model/signup-api';
@@ -15,11 +15,13 @@ import {
   type SignupProfileValues,
 } from '@/features/signup/model/signup-profile';
 import { useNicknameCheckRequest } from '@/features/signup/model/use-nickname-check-request';
-import { Avatar, Button, ModalTitle, PasswordInput, TextInput } from '@/shared/ui';
+import { AvatarUploader, Button, ModalTitle, PasswordInput, TextInput } from '@/shared/ui';
 
 import { SignupFieldMessage } from './signup-field-message';
 
 export interface SignupProfileStepProps {
+  /** 프로필 이미지를 선택하면 호출되는 함수. 선택한 이미지 파일을 받습니다. */
+  onAvatarChange?: (file: File) => void;
   /** 닉네임의 초기값 */
   defaultNickname?: string;
   /** 비밀번호의 초기값 */
@@ -51,6 +53,7 @@ export function SignupProfileStep({
   defaultPassword = '',
   isSubmitting = false,
   nicknameStatus,
+  onAvatarChange,
   onCheckNickname,
   onNicknameChange,
   onPasswordChange,
@@ -60,6 +63,7 @@ export function SignupProfileStep({
 }: SignupProfileStepProps) {
   const nicknameMessageId = useId();
   const passwordMessageId = useId();
+  const [avatarSrc, setAvatarSrc] = useState<string>();
   const {
     control,
     formState: { errors, isSubmitted },
@@ -74,6 +78,16 @@ export function SignupProfileStep({
   const password = useWatch({ control, name: 'password' });
 
   useNicknameCheckRequest(nickname, onCheckNickname);
+
+  // 선택한 이미지의 미리보기 주소는 교체하거나 화면을 벗어날 때 해제합니다.
+  useEffect(
+    () => () => {
+      if (avatarSrc) {
+        URL.revokeObjectURL(avatarSrc);
+      }
+    },
+    [avatarSrc],
+  );
 
   // 초기값이 있으면 입력 전에도 닉네임 오류를 표시합니다.
   useEffect(() => {
@@ -99,7 +113,18 @@ export function SignupProfileStep({
       <ModalTitle>프로필을 설정해주세요</ModalTitle>
 
       <div className="flex justify-center">
-        <Avatar />
+        <AvatarUploader
+          alt={avatarSrc ? '선택한 프로필 이미지' : undefined}
+          onFileSelect={(file) => {
+            if (!file.type.startsWith('image/')) {
+              return;
+            }
+
+            setAvatarSrc(URL.createObjectURL(file));
+            onAvatarChange?.(file);
+          }}
+          src={avatarSrc}
+        />
       </div>
 
       <form

@@ -21,6 +21,7 @@ const meta = {
     docs: { story: { inline: false, iframeHeight: 720 } },
   },
   args: {
+    onAvatarChange: fn(),
     onNicknameChange: fn(),
     onCheckNickname: fn(),
     onPasswordChange: fn(),
@@ -163,5 +164,48 @@ export const RequestError: Story = {
     nicknameStatus: 'available',
     defaultPassword: 'godari13620',
     requestError: true,
+  },
+};
+
+// 1x1 투명 PNG입니다. 실제로 불러올 수 있는 이미지여야 Avatar가 미리보기를 표시합니다.
+const pixelPng = Uint8Array.from(
+  atob(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  ),
+  (char) => char.charCodeAt(0),
+);
+
+export const SelectAvatar: Story = {
+  play: async ({ args }) => {
+    const dialog = await screen.findByRole('dialog');
+    const input = dialog.querySelector<HTMLInputElement>('input[type="file"]');
+    const image = new File([pixelPng], 'avatar.png', { type: 'image/png' });
+
+    await expect(within(dialog).getByRole('button', { name: '프로필 이미지 선택' })).toBeVisible();
+    await expect(dialog.querySelector('img')).toBeNull();
+
+    await userEvent.upload(input as HTMLInputElement, image);
+
+    await expect(args.onAvatarChange).toHaveBeenCalledWith(image);
+    await waitFor(() =>
+      expect(dialog.querySelector('img')).toHaveAttribute('src', expect.stringMatching(/^blob:/)),
+    );
+    await expect(within(dialog).getByRole('img', { name: '선택한 프로필 이미지' })).toBeVisible();
+  },
+};
+
+export const IgnoreNonImageFile: Story = {
+  play: async ({ args }) => {
+    const dialog = await screen.findByRole('dialog');
+    const input = dialog.querySelector<HTMLInputElement>('input[type="file"]');
+
+    await userEvent.upload(
+      input as HTMLInputElement,
+      new File(['text'], 'note.txt', { type: 'text/plain' }),
+      { applyAccept: false },
+    );
+
+    await expect(args.onAvatarChange).not.toHaveBeenCalled();
+    await expect(dialog.querySelector('img')).toBeNull();
   },
 };
