@@ -16,11 +16,11 @@ import {
 import { type SignupTermId } from './signup-terms';
 import { useCountdown } from './use-countdown';
 
-type SignupStep = 'terms' | 'email' | 'profile' | 'preference';
+type SignupStep = 'terms' | 'email' | 'profile' | 'complete' | 'preference';
 
 interface UseSignupStepsOptions {
   api: SignupApi;
-  /** 선호 지역·컨셉을 저장하거나 건너뛰어 가입이 끝났을 때 호출됩니다. */
+  /** 가입 완료 안내에서 나중에 설정하거나, 선호 지역·컨셉을 저장하거나 건너뛰어 가입이 끝났을 때 호출됩니다. */
   onComplete: () => void;
 }
 
@@ -191,13 +191,17 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
       () => api.signup({ ...profile, email }),
       (result) => {
         if (result === 'created') {
-          setStep('preference');
+          setStep('complete');
           return;
         }
 
         setPasswordError(result);
       },
     );
+  }
+
+  function startPreference() {
+    setStep('preference');
   }
 
   function submitPreference(preference: SignupPreferenceValues) {
@@ -232,6 +236,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     checkNickname,
     changePassword: () => setPasswordError(undefined),
     submitProfile,
+    startPreference,
     submitPreference,
     skipPreference,
     reset,

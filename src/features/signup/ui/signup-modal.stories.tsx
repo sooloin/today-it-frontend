@@ -86,10 +86,47 @@ export const FullFlow: Story = {
       'godari13620{Enter}',
     );
 
-    await userEvent.click(await within(dialog).findByRole('link', { name: '나중에 설정할게요' }));
+    // 가입 완료 안내에서 나중에 설정하면 선호 지역 단계 없이 끝납니다.
+    await within(dialog).findByRole('heading', { name: '회원가입이 완료되었어요' });
+    await userEvent.click(within(dialog).getByRole('link', { name: '나중에 설정할게요' }));
 
     await waitFor(() => expect(args.onComplete).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  },
+};
+
+export const FullFlowWithPreference: Story = {
+  render,
+  play: async ({ args }) => {
+    const dialog = await screen.findByRole('dialog');
+
+    await agreeAndGoToEmail(dialog);
+
+    await userEvent.type(
+      await within(dialog).findByRole('textbox', { name: '이메일' }),
+      'user@test.com{Enter}',
+    );
+    await userEvent.type(
+      await within(dialog).findByRole('textbox', { name: '인증코드' }),
+      '123456{Enter}',
+    );
+    await userEvent.type(
+      await within(dialog).findByRole('textbox', { name: '닉네임' }),
+      '또르끄막두',
+    );
+    await within(dialog).findByText('사용 가능한 닉네임이에요.', {}, { timeout: 3000 });
+    await userEvent.type(
+      within(dialog).getByLabelText('비밀번호', { selector: 'input' }),
+      'godari13620{Enter}',
+    );
+
+    // 취향 알려주기를 누르면 선호 지역·컨셉 단계로 이동하고, 아직 가입은 끝나지 않습니다.
+    await userEvent.click(await within(dialog).findByRole('button', { name: '취향 알려주기' }));
+    await within(dialog).findByRole('button', { name: '선택 완료' });
+    await expect(args.onComplete).not.toHaveBeenCalled();
+
+    await userEvent.click(within(dialog).getByRole('link', { name: '나중에 설정할게요' }));
+    await waitFor(() => expect(args.onComplete).toHaveBeenCalledTimes(1));
   },
 };
 

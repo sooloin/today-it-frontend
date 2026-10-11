@@ -7,6 +7,7 @@ import { createMockSignupApi } from '@/features/signup/model/signup-mock-api';
 import { useSignupSteps } from '@/features/signup/model/use-signup-steps';
 import { Logo, Modal } from '@/shared/ui';
 
+import { SignupCompleteStep } from './signup-complete-step';
 import { SignupEmailStep } from './signup-email-step';
 import { SignupPreferenceStep } from './signup-preference-step';
 import { SignupProfileStep } from './signup-profile-step';
@@ -21,12 +22,13 @@ export interface SignupModalProps {
   loginHref: string;
   /** 가입 과정에서 호출하는 서버 요청. 생략하면 임시 응답을 사용합니다. */
   api?: SignupApi;
-  /** 선호 지역·컨셉을 저장하거나 건너뛰어 가입이 끝났을 때 호출되는 함수 */
+  /** 가입 완료 안내에서 나중에 설정하거나, 선호 지역·컨셉을 저장하거나 건너뛰어 가입이 끝났을 때 호출되는 함수 */
   onComplete?: () => void;
 }
 
 /**
- * 회원가입 모달입니다. 약관 동의, 이메일 인증, 프로필 설정, 선호 지역·컨셉 순서로 진행합니다.
+ * 회원가입 모달입니다. 약관 동의, 이메일 인증, 프로필 설정, 가입 완료 안내, 선호 지역·컨셉 순서로 진행합니다.
+ * 선호 지역·컨셉은 가입 완료 안내에서 `취향 알려주기`를 눌렀을 때만 거칩니다.
  * 닫으면 닫힘 애니메이션이 끝난 뒤 처음 단계로 돌아가고, 가입이 끝나면 `onComplete`를 호출하고 닫습니다.
  *
  * @example
@@ -93,6 +95,10 @@ export function SignupModal({ api, loginHref, onComplete, onOpenChange, open }: 
           passwordError={flow.passwordError}
           requestError={flow.requestFailed}
         />
+      ) : null}
+
+      {flow.step === 'complete' ? (
+        <SignupCompleteStep onSkip={flow.skipPreference} onStartPreference={flow.startPreference} />
       ) : null}
 
       {flow.step === 'preference' ? (
