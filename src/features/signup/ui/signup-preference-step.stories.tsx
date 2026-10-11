@@ -18,6 +18,7 @@ const meta = {
   ],
   parameters: {
     layout: 'fullscreen',
+    docs: { story: { inline: false, iframeHeight: 720 } },
   },
   args: {
     onSubmit: fn(),

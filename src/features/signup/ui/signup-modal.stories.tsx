@@ -14,6 +14,7 @@ const meta = {
   tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',
+    docs: { story: { inline: false, iframeHeight: 720 } },
   },
   args: {
     open: true,
