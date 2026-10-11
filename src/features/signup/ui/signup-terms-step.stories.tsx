@@ -23,7 +23,6 @@ const meta = {
   args: {
     loginHref: '/login',
     onNext: fn(),
-    onViewTerms: fn(),
   },
 } satisfies Meta<typeof SignupTermsStep>;
 
@@ -100,14 +99,42 @@ export const UncheckOptionalReleasesAll: Story = {
   },
 };
 
-export const ViewTerms: Story = {
-  play: async ({ args }) => {
+export const ExpandTerms: Story = {
+  play: async () => {
     const dialog = await screen.findByRole('dialog');
+    const service = within(dialog).getByRole('button', { name: '서비스 이용약관 동의 전문 보기' });
+    const privacy = within(dialog).getByRole('button', {
+      name: '개인정보 수집·이용 동의 전문 보기',
+    });
+
+    await expect(service).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(service);
+    await expect(service).toHaveAttribute('aria-expanded', 'true');
+    await expect(within(dialog).getByText(/제1조\(목적\)/)).toBeVisible();
+
+    // 하나를 열면 열려 있던 약관은 접혀 모달이 화면 높이를 넘지 않습니다.
+    await userEvent.click(privacy);
+    await expect(privacy).toHaveAttribute('aria-expanded', 'true');
+    await expect(service).toHaveAttribute('aria-expanded', 'false');
+    await expect(within(dialog).queryByText(/제1조\(목적\)/)).not.toBeInTheDocument();
+
+    await userEvent.click(privacy);
+    await expect(privacy).toHaveAttribute('aria-expanded', 'false');
+  },
+};
+
+export const ExpandKeepsAgreement: Story = {
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+    const service = within(dialog).getByRole('checkbox', { name: '(필수) 서비스 이용약관 동의' });
 
     await userEvent.click(
       within(dialog).getByRole('button', { name: '서비스 이용약관 동의 전문 보기' }),
     );
+    await expect(service).not.toBeChecked();
 
-    await expect(args.onViewTerms).toHaveBeenCalledWith('service');
+    await userEvent.click(service);
+    await expect(service).toBeChecked();
   },
 };

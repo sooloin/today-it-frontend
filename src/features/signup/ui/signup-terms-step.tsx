@@ -1,5 +1,6 @@
 'use client';
 
+import { Accordion } from '@base-ui/react/accordion';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useId } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -23,8 +24,6 @@ export interface SignupTermsStepProps {
   defaultAgreedIds?: readonly SignupTermId[];
   /** 필수 약관에 동의하고 다음 버튼을 눌렀을 때 호출되는 함수. 동의한 약관 id 목록을 받습니다. */
   onNext: (agreedIds: SignupTermId[]) => void;
-  /** 약관 전문 보기를 눌렀을 때 호출되는 함수 */
-  onViewTerms?: (id: SignupTermId) => void;
   /** 이미 계정이 있는 사용자가 이동할 로그인 경로 */
   loginHref: string;
 }
@@ -34,7 +33,6 @@ export function SignupTermsStep({
   defaultAgreedIds = [],
   loginHref,
   onNext,
-  onViewTerms,
 }: SignupTermsStepProps) {
   const allLabelId = useId();
   const itemLabelIdPrefix = useId();
@@ -77,38 +75,56 @@ export function SignupTermsStep({
 
               <hr className="h-divider border-0 bg-border-default" />
 
-              {signupTerms.map((term) => {
-                const labelId = `${itemLabelIdPrefix}-${term.id}`;
-                const title = `${term.required ? '(필수)' : '(선택)'} ${term.label}`;
+              <Accordion.Root className="flex flex-col gap-16">
+                {signupTerms.map((term) => {
+                  const labelId = `${itemLabelIdPrefix}-${term.id}`;
+                  const title = `${term.required ? '(필수)' : '(선택)'} ${term.label}`;
 
-                return (
-                  <div className="flex items-center justify-between gap-8" key={term.id}>
-                    <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-10">
-                      <Checkbox
-                        aria-labelledby={labelId}
-                        checked={field.value.includes(term.id)}
-                        onCheckedChange={(checked) =>
-                          field.onChange(setTermAgreed(field.value, term.id, checked))
-                        }
-                      />
-                      <span
-                        className="min-w-0 text-caption-c1 [color:var(--td-color-text-primary)]"
-                        id={labelId}
-                      >
-                        {title}
-                      </span>
-                    </label>
-                    <button
-                      aria-label={`${term.label} 전문 보기`}
-                      className="inline-flex size-24 shrink-0 cursor-pointer items-center justify-center p-0 text-icon-muted outline-none focus-visible:ring-2 focus-visible:ring-border-active focus-visible:ring-offset-2"
-                      onClick={() => onViewTerms?.(term.id)}
-                      type="button"
-                    >
-                      <Icon name="chevron-right" size={16} tone="inherit" />
-                    </button>
-                  </div>
-                );
-              })}
+                  return (
+                    <Accordion.Item className="flex flex-col gap-12" key={term.id} value={term.id}>
+                      <div className="flex items-center justify-between gap-8">
+                        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-10">
+                          <Checkbox
+                            aria-labelledby={labelId}
+                            checked={field.value.includes(term.id)}
+                            onCheckedChange={(checked) =>
+                              field.onChange(setTermAgreed(field.value, term.id, checked))
+                            }
+                          />
+                          <span
+                            className="min-w-0 text-caption-c1 [color:var(--td-color-text-primary)]"
+                            id={labelId}
+                          >
+                            {title}
+                          </span>
+                        </label>
+                        <Accordion.Header className="flex">
+                          <Accordion.Trigger
+                            aria-label={`${term.label} 전문 보기`}
+                            className="group inline-flex size-24 shrink-0 cursor-pointer items-center justify-center p-0 text-icon-muted outline-none focus-visible:ring-2 focus-visible:ring-border-active focus-visible:ring-offset-2"
+                          >
+                            <Icon
+                              className="group-data-panel-open:hidden"
+                              name="chevron-down"
+                              size={16}
+                              tone="inherit"
+                            />
+                            <Icon
+                              className="hidden group-data-panel-open:inline-block"
+                              name="chevron-up"
+                              size={16}
+                              tone="inherit"
+                            />
+                          </Accordion.Trigger>
+                        </Accordion.Header>
+                      </div>
+                      <Accordion.Panel className="rounded-md bg-surface-subtle p-16 text-body-b3 whitespace-pre-line [color:var(--td-color-text-secondary)]">
+                        {term.content}
+                      </Accordion.Panel>
+                    </Accordion.Item>
+                  );
+                })}
+              </Accordion.Root>
             </div>
           )}
         />
