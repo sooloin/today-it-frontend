@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createHttpSignupApi, toAgreements } from './signup-http-api';
 
@@ -25,8 +25,15 @@ const fail = (status: number, code: string) => ({
   body: { success: false, code, message: code },
 });
 
+const BASE_URL = 'https://api.example.com';
+
+beforeEach(() => {
+  vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', BASE_URL);
+});
+
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe('toAgreements', () => {
@@ -46,7 +53,7 @@ describe('createHttpSignupApi.requestCode', () => {
 
     await expect(createHttpSignupApi().requestCode('a@b.com')).resolves.toBe('registered');
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/auth/emails/check?email=a%40b.com');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${BASE_URL}/api/v1/auth/emails/check?email=a%40b.com`);
   });
 
   it('사용 가능한 이메일이면 SIGNUP 목적으로 발송하고 sent를 반환한다', async () => {
@@ -59,7 +66,7 @@ describe('createHttpSignupApi.requestCode', () => {
 
     const [url, init] = fetchMock.mock.calls[1];
 
-    expect(url).toBe('/api/v1/auth/email-verifications');
+    expect(url).toBe(`${BASE_URL}/api/v1/auth/email-verifications`);
     expect(JSON.parse(init.body)).toEqual({ email: 'a@b.com', purpose: 'SIGNUP' });
   });
 
@@ -81,6 +88,19 @@ describe('createHttpSignupApi.requestCode', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
 
     await expect(createHttpSignupApi().requestCode('a@b.com')).rejects.toThrow('Failed to fetch');
+  });
+});
+
+describe('서버 주소 설정', () => {
+  it('NEXT_PUBLIC_API_BASE_URL이 없으면 요청 전에 오류를 던진다', async () => {
+    vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', '');
+
+    const fetchMock = mockFetch();
+
+    await expect(createHttpSignupApi().requestCode('a@b.com')).rejects.toThrow(
+      'API 서버 주소가 설정되지 않았습니다.',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

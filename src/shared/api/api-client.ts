@@ -53,8 +53,16 @@ async function readEnvelope(response: Response): Promise<ApiEnvelope | undefined
 }
 
 function buildUrl(path: string, query?: Record<string, QueryValue>) {
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  if (!baseUrl) {
+    throw new Error('API 서버 주소가 설정되지 않았습니다.');
+  }
+
+  const url = `${baseUrl.replace(/\/$/, '')}${path}`;
+
   if (!query) {
-    return path;
+    return url;
   }
 
   const params = new URLSearchParams();
@@ -63,12 +71,12 @@ function buildUrl(path: string, query?: Record<string, QueryValue>) {
     params.set(key, String(value));
   }
 
-  return `${path}?${params.toString()}`;
+  return `${url}?${params.toString()}`;
 }
 
 /**
  * `{ success, data }` 형태의 JSON API를 호출하고 `data`를 반환합니다.
- * 같은 출처의 상대 경로(`/api/...`)로 호출하며, 서버 연결은 Next 프록시(rewrites)가 담당합니다.
+ * 서버 주소는 `NEXT_PUBLIC_API_BASE_URL` 환경변수를 따르며, `path`는 `/api/...`로 시작합니다.
  */
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const { method = 'GET', query, body, signal } = options;
