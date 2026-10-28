@@ -33,8 +33,11 @@ export interface SignupRequest extends SignupProfileValues {
  * reject는 모달이 요청 실패 문구와 재시도 상태로 처리합니다.
  */
 export interface SignupApi {
-  /** 이메일로 인증코드를 보냅니다. 재전송에도 사용합니다. */
-  requestCode: (email: string) => Promise<'sent' | SignupEmailServerError>;
+  /** 이메일로 인증코드를 보냅니다. 재전송이면 `resend`를 켜서 이미 확인한 이메일 중복 확인을 건너뜁니다. */
+  requestCode: (
+    email: string,
+    options?: { resend?: boolean },
+  ) => Promise<'sent' | SignupEmailServerError>;
   /** 인증코드를 확인합니다. 성공하면 가입에 사용할 인증 완료 토큰을 반환합니다. */
   verifyCode: (
     email: string,

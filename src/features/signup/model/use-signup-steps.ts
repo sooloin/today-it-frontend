@@ -125,7 +125,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
 
   function resendCode() {
     void submit(
-      () => api.requestCode(email),
+      () => api.requestCode(email, { resend: true }),
       (result) => {
         if (result !== 'sent') {
           setEmailError(result);
@@ -215,6 +215,10 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
           setVerificationToken('');
           resetCountdown();
           setCodeError(undefined);
+          // 프로필 단계는 다시 빈 입력으로 열리므로 이전 닉네임 검사 결과와 비밀번호 오류도 버립니다.
+          nicknameRequestRef.current += 1;
+          setNicknameStatus(undefined);
+          setPasswordError(undefined);
           setPhase('email');
           setEmailError(result === 'emailRegistered' ? 'registered' : 'verificationExpired');
           setStep('email');

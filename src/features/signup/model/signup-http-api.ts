@@ -32,13 +32,17 @@ export function toAgreements(agreedIds: readonly SignupTermId[]) {
  */
 export function createHttpSignupApi(): SignupApi {
   return {
-    async requestCode(email) {
-      const { available } = await apiRequest<{ available: boolean }>('/api/v1/auth/emails/check', {
-        query: { email },
-      });
+    async requestCode(email, { resend = false } = {}) {
+      // 재전송은 처음 발송 전에 이미 확인한 이메일이라 중복 확인을 다시 하지 않습니다.
+      if (!resend) {
+        const { available } = await apiRequest<{ available: boolean }>(
+          '/api/v1/auth/emails/check',
+          { query: { email } },
+        );
 
-      if (!available) {
-        return 'registered';
+        if (!available) {
+          return 'registered';
+        }
       }
 
       try {

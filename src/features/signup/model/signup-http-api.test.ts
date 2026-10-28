@@ -70,6 +70,16 @@ describe('createHttpSignupApi.requestCode', () => {
     expect(JSON.parse(init.body)).toEqual({ email: 'a@b.com', purpose: 'SIGNUP' });
   });
 
+  it('재전송이면 이메일 중복 확인 없이 바로 발송한다', async () => {
+    const fetchMock = mockFetch(ok({ email: 'a@b.com', purpose: 'SIGNUP' }));
+
+    await expect(createHttpSignupApi().requestCode('a@b.com', { resend: true })).resolves.toBe(
+      'sent',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${BASE_URL}/api/v1/auth/email-verifications`);
+  });
+
   it('재전송 대기 중이면 tooSoon을 반환한다', async () => {
     mockFetch(ok({ available: true }), fail(400, 'EMAIL_VERIFICATION_RESEND_TOO_SOON'));
 
