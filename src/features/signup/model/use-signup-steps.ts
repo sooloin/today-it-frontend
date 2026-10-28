@@ -33,6 +33,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
   const [phase, setPhase] = useState<SignupEmailPhase>('email');
   const [agreedIds, setAgreedIds] = useState<SignupTermId[]>([]);
   const [email, setEmail] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
   const [emailError, setEmailError] = useState<SignupEmailServerError>();
   const [codeError, setCodeError] = useState<SignupCodeError>();
   const [nicknameStatus, setNicknameStatus] = useState<SignupNicknameStatus>();
@@ -91,6 +92,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     setPhase('email');
     setAgreedIds([]);
     setEmail('');
+    setVerificationToken('');
     setEmailError(undefined);
     setCodeError(undefined);
     setNicknameStatus(undefined);
@@ -130,6 +132,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
           return;
         }
 
+        setEmailError(undefined);
         setCodeError(undefined);
         startCountdown();
       },
@@ -145,13 +148,14 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     void submit(
       () => api.verifyCode(email, code),
       (result) => {
-        if (result === 'verified') {
-          setRequestFailed(false);
-          setStep('profile');
+        if (typeof result === 'string') {
+          setCodeError(result);
           return;
         }
 
-        setCodeError(result);
+        setVerificationToken(result.verificationToken);
+        setRequestFailed(false);
+        setStep('profile');
       },
     );
   }
@@ -188,7 +192,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
 
   function submitProfile(profile: SignupProfileValues) {
     void submit(
-      () => api.signup({ ...profile, email }),
+      () => api.signup({ ...profile, email, verificationToken, agreedIds }),
       (result) => {
         if (result === 'created') {
           setStep('complete');
@@ -231,7 +235,10 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     resendCode,
     verifyCode,
     changeEmail: () => setEmailError(undefined),
-    changeCode: () => setCodeError(undefined),
+    changeCode: () => {
+      setCodeError(undefined);
+      setEmailError(undefined);
+    },
     changeNickname,
     checkNickname,
     changePassword: () => setPasswordError(undefined),

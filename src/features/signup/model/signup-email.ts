@@ -2,8 +2,11 @@ import { z } from 'zod';
 
 export type SignupEmailPhase = 'email' | 'code';
 type SignupEmailClientError = 'format';
-/** `registered`는 이미 가입, `social`은 소셜 로그인으로 가입된 이메일입니다. */
-export type SignupEmailServerError = 'registered' | 'social';
+/**
+ * `registered`는 이미 가입, `social`은 소셜 로그인으로 가입된 이메일입니다.
+ * `tooSoon`은 직전 발송 후 재전송 대기 시간이 지나지 않은 경우입니다.
+ */
+export type SignupEmailServerError = 'registered' | 'social' | 'tooSoon';
 /** `invalid`는 불일치, `expired`는 시간 만료입니다. */
 export type SignupCodeError = 'invalid' | 'expired';
 
@@ -11,6 +14,7 @@ export const signupEmailErrorMessages = {
   format: '이메일 형식이 올바르지 않아요.',
   registered: '이미 가입된 이메일이에요.',
   social: '소셜 로그인으로 가입된 이메일이에요.',
+  tooSoon: '인증코드는 1분 후에 다시 요청할 수 있어요.',
 } as const satisfies Record<SignupEmailClientError | SignupEmailServerError, string>;
 
 export const signupCodeErrorMessages = {
@@ -28,8 +32,8 @@ export type SignupEmailValues = z.infer<typeof signupEmailSchema>;
 
 const SIGNUP_CODE_LENGTH = 6;
 
-/** 인증코드의 유효 시간(초) */
-export const SIGNUP_CODE_EXPIRES_SECONDS = 300;
+/** 인증코드의 유효 시간(초). 서버는 30분 동안 유효합니다. */
+export const SIGNUP_CODE_EXPIRES_SECONDS = 1800;
 
 /** 인증코드 6자리를 모두 입력했는지 확인합니다. `000 - 000`의 구분자는 무시합니다. */
 export function isCodeComplete(value: string) {
