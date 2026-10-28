@@ -104,7 +104,7 @@ export function SignupEmailStep({
 
   const emailErrorMessage =
     (isSubmitted ? errors.email?.message : undefined) ??
-    (emailError === 'registered' || emailError === 'tooSoon'
+    (emailError !== undefined && emailError !== 'social'
       ? signupEmailErrorMessages[emailError]
       : undefined);
   const socialErrorMessage = emailError === 'social' ? signupEmailErrorMessages.social : undefined;

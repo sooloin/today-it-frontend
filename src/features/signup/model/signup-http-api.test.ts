@@ -76,8 +76,14 @@ describe('createHttpSignupApi.requestCode', () => {
     await expect(createHttpSignupApi().requestCode('a@b.com')).resolves.toBe('tooSoon');
   });
 
+  it('발송 횟수 제한에 걸리면 limitExceeded를 반환한다', async () => {
+    mockFetch(ok({ available: true }), fail(400, 'EMAIL_VERIFICATION_SEND_LIMIT_EXCEEDED'));
+
+    await expect(createHttpSignupApi().requestCode('a@b.com')).resolves.toBe('limitExceeded');
+  });
+
   it('그 밖의 서버 오류는 던진다', async () => {
-    mockFetch(ok({ available: true }), fail(500, 'EMAIL_SEND_FAILED'));
+    mockFetch(ok({ available: true }), fail(500, 'EMAIL_DELIVERY_FAILED'));
 
     await expect(createHttpSignupApi().requestCode('a@b.com')).rejects.toMatchObject({
       status: 500,
@@ -145,6 +151,20 @@ describe('createHttpSignupApi.verifyCode', () => {
     await expect(api.verifyCode('a@b.com', '111111')).resolves.toBe('reissued');
   });
 
+  it('만료된 코드는 expired를 반환한다', async () => {
+    mockFetch(fail(400, 'EMAIL_VERIFICATION_CODE_EXPIRED'));
+
+    await expect(createHttpSignupApi().verifyCode('a@b.com', '123456')).resolves.toBe('expired');
+  });
+
+  it('3회 실패 후 발송 횟수 제한에 걸리면 limitExceeded를 반환한다', async () => {
+    mockFetch(fail(400, 'EMAIL_VERIFICATION_SEND_LIMIT_EXCEEDED'));
+
+    await expect(createHttpSignupApi().verifyCode('a@b.com', '123456')).resolves.toBe(
+      'limitExceeded',
+    );
+  });
+
   it('명세에 없는 400 코드는 던진다', async () => {
     mockFetch(fail(400, 'SOMETHING_ELSE'));
 
@@ -202,12 +222,22 @@ describe('createHttpSignupApi.signup', () => {
     });
   });
 
-  it('중복 등 서버 오류는 던진다', async () => {
-    mockFetch(fail(409, 'EMAIL_ALREADY_EXISTS'));
+  it.each([
+    [400, 'EMAIL_VERIFICATION_TOKEN_INVALID', 'verificationExpired'],
+    [409, 'EMAIL_ALREADY_EXISTS', 'emailRegistered'],
+    [409, 'NICKNAME_ALREADY_EXISTS', 'nicknameDuplicated'],
+  ])('%i %s는 %s를 반환한다', async (status, code, expected) => {
+    mockFetch(fail(status, code));
+
+    await expect(createHttpSignupApi().signup(request)).resolves.toBe(expected);
+  });
+
+  it('명세에 없는 서버 오류는 던진다', async () => {
+    mockFetch(fail(409, 'GOOGLE_ACCOUNT_ALREADY_EXISTS'));
 
     await expect(createHttpSignupApi().signup(request)).rejects.toMatchObject({
       status: 409,
-      code: 'EMAIL_ALREADY_EXISTS',
+      code: 'GOOGLE_ACCOUNT_ALREADY_EXISTS',
     });
   });
 });

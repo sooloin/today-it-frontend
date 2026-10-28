@@ -51,6 +51,10 @@ export function createHttpSignupApi(): SignupApi {
           return 'tooSoon';
         }
 
+        if (isApiError(error, 400, 'EMAIL_VERIFICATION_SEND_LIMIT_EXCEEDED')) {
+          return 'limitExceeded';
+        }
+
         throw error;
       }
 
@@ -81,6 +85,15 @@ export function createHttpSignupApi(): SignupApi {
             : 'invalid';
         }
 
+        if (isApiError(error, 400, 'EMAIL_VERIFICATION_CODE_EXPIRED')) {
+          return 'expired';
+        }
+
+        // 3회 실패로 새 인증코드를 보내야 했지만 발송 횟수 제한에 걸린 경우입니다.
+        if (isApiError(error, 400, 'EMAIL_VERIFICATION_SEND_LIMIT_EXCEEDED')) {
+          return 'limitExceeded';
+        }
+
         throw error;
       }
     },
@@ -104,17 +117,33 @@ export function createHttpSignupApi(): SignupApi {
     },
 
     async signup({ agreedIds, email, nickname, password, verificationToken }) {
-      await apiRequest('/api/v1/auth/signup', {
-        method: 'POST',
-        body: {
-          provider: 'LOCAL',
-          email,
-          emailVerificationToken: verificationToken,
-          password,
-          nickname,
-          agreements: toAgreements(agreedIds),
-        },
-      });
+      try {
+        await apiRequest('/api/v1/auth/signup', {
+          method: 'POST',
+          body: {
+            provider: 'LOCAL',
+            email,
+            emailVerificationToken: verificationToken,
+            password,
+            nickname,
+            agreements: toAgreements(agreedIds),
+          },
+        });
+      } catch (error) {
+        if (isApiError(error, 400, 'EMAIL_VERIFICATION_TOKEN_INVALID')) {
+          return 'verificationExpired';
+        }
+
+        if (isApiError(error, 409, 'EMAIL_ALREADY_EXISTS')) {
+          return 'emailRegistered';
+        }
+
+        if (isApiError(error, 409, 'NICKNAME_ALREADY_EXISTS')) {
+          return 'nicknameDuplicated';
+        }
+
+        throw error;
+      }
 
       return 'created';
     },

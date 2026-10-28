@@ -10,6 +10,13 @@ import { type SignupTermId } from './signup-terms';
 /** 서버 요청이 실패했을 때 표시하는 문구 */
 export const signupRequestErrorMessage = '요청을 처리하지 못했어요. 잠시 후 다시 시도해주세요.';
 
+/**
+ * 가입 요청을 서버가 거절한 이유입니다.
+ * `verificationExpired`는 이메일 인증이 만료된 경우, `emailRegistered`는 그 사이 이메일이 가입된 경우,
+ * `nicknameDuplicated`는 닉네임이 이미 사용 중인 경우입니다.
+ */
+export type SignupSubmitError = 'verificationExpired' | 'emailRegistered' | 'nicknameDuplicated';
+
 /** 이메일로 가입할 때 서버에 보내는 값 */
 export interface SignupRequest extends SignupProfileValues {
   email: string;
@@ -36,7 +43,9 @@ export interface SignupApi {
   /** 닉네임이 사용 가능한지 확인합니다. */
   checkNickname: (nickname: string) => Promise<SignupNicknameServerResult>;
   /** 프로필로 회원가입합니다. */
-  signup: (request: SignupRequest) => Promise<'created' | SignupPasswordServerError>;
+  signup: (
+    request: SignupRequest,
+  ) => Promise<'created' | SignupPasswordServerError | SignupSubmitError>;
   /** 선호 지역·컨셉을 저장합니다. */
   savePreference: (preference: SignupPreferenceValues) => Promise<void>;
 }

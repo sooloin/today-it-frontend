@@ -205,6 +205,22 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
           return;
         }
 
+        if (result === 'nicknameDuplicated') {
+          setNicknameStatus('duplicated');
+          return;
+        }
+
+        if (result === 'verificationExpired' || result === 'emailRegistered') {
+          // 이메일 인증을 처음부터 다시 해야 하므로 이메일 단계로 돌아갑니다.
+          setVerificationToken('');
+          resetCountdown();
+          setCodeError(undefined);
+          setPhase('email');
+          setEmailError(result === 'emailRegistered' ? 'registered' : 'verificationExpired');
+          setStep('email');
+          return;
+        }
+
         setPasswordError(result);
       },
     );
