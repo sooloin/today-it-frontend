@@ -113,6 +113,15 @@ export const CodeInvalid: Story = {
   },
 };
 
+export const CodeReissued: Story = {
+  args: {
+    phase: 'code',
+    defaultEmail: 'wowowoooo@gmail.com',
+    codeError: 'reissued',
+    timerSeconds: SIGNUP_CODE_EXPIRES_SECONDS,
+  },
+};
+
 export const CodeExpired: Story = {
   args: {
     phase: 'code',

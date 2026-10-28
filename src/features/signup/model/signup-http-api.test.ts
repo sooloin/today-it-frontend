@@ -124,6 +124,27 @@ describe('createHttpSignupApi.verifyCode', () => {
     await expect(createHttpSignupApi().verifyCode('a@b.com', '111111')).resolves.toBe('invalid');
   });
 
+  it('실패 횟수가 최대에 못 미치면 invalid, 도달하면 reissued를 반환한다', async () => {
+    const invalid = (failureCount: number) => ({
+      status: 400,
+      body: {
+        success: false,
+        code: 'EMAIL_VERIFICATION_CODE_INVALID',
+        message: '인증번호가 올바르지 않습니다.',
+        failureCount,
+        maxFailureCount: 3,
+      },
+    });
+
+    mockFetch(invalid(1), invalid(2), invalid(3));
+
+    const api = createHttpSignupApi();
+
+    await expect(api.verifyCode('a@b.com', '111111')).resolves.toBe('invalid');
+    await expect(api.verifyCode('a@b.com', '111111')).resolves.toBe('invalid');
+    await expect(api.verifyCode('a@b.com', '111111')).resolves.toBe('reissued');
+  });
+
   it('명세에 없는 400 코드는 던진다', async () => {
     mockFetch(fail(400, 'SOMETHING_ELSE'));
 

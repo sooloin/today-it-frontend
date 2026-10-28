@@ -17,12 +17,20 @@ export class ApiError extends Error {
   readonly status: number;
   /** 서버가 내려준 오류 코드. 응답 본문에 없으면 `undefined`입니다. */
   readonly code: string | undefined;
+  /** 서버가 내려준 응답 본문. `failureCount`처럼 오류별로 추가되는 값을 읽을 때 사용합니다. */
+  readonly body: Record<string, unknown> | undefined;
 
-  constructor(status: number, code: string | undefined, message: string) {
+  constructor(
+    status: number,
+    code: string | undefined,
+    message: string,
+    body?: Record<string, unknown>,
+  ) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
+    this.body = body;
   }
 }
 
@@ -35,12 +43,12 @@ export function isApiError(error: unknown, status: number, code?: string): error
   );
 }
 
-interface ApiEnvelope {
+type ApiEnvelope = Record<string, unknown> & {
   success?: boolean;
   data?: unknown;
   code?: string;
   message?: string;
-}
+};
 
 async function readEnvelope(response: Response): Promise<ApiEnvelope | undefined> {
   try {
@@ -94,6 +102,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       response.status,
       envelope?.code,
       envelope?.message ?? `요청이 실패했습니다. (${response.status})`,
+      envelope,
     );
   }
 

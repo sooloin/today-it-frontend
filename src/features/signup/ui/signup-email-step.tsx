@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useId } from 'react';
+import { useEffect, useId } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { Button, CodeInput, Divider, ModalTitle, SocialLoginButton, TextInput } from '@/shared/ui';
@@ -94,6 +94,13 @@ export function SignupEmailStep({
   const email = useWatch({ control, name: 'email' });
   const code = useWatch({ control, name: 'code' });
   const isCodePhase = phase === 'code';
+
+  // 새 인증코드가 다시 발송되면 이전에 입력한 코드를 비웁니다.
+  useEffect(() => {
+    if (codeError === 'reissued') {
+      setValue('code', '');
+    }
+  }, [codeError, setValue]);
 
   const emailErrorMessage =
     (isSubmitted ? errors.email?.message : undefined) ??

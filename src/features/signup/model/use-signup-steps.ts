@@ -150,6 +150,12 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
       (result) => {
         if (typeof result === 'string') {
           setCodeError(result);
+
+          // 서버가 새 인증코드를 보냈으므로 유효 시간을 다시 셉니다.
+          if (result === 'reissued') {
+            startCountdown();
+          }
+
           return;
         }
 

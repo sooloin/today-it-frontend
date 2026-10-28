@@ -7,8 +7,11 @@ type SignupEmailClientError = 'format';
  * `tooSoon`은 직전 발송 후 재전송 대기 시간이 지나지 않은 경우입니다.
  */
 export type SignupEmailServerError = 'registered' | 'social' | 'tooSoon';
-/** `invalid`는 불일치, `expired`는 시간 만료입니다. */
-export type SignupCodeError = 'invalid' | 'expired';
+/**
+ * `invalid`는 불일치, `expired`는 시간 만료입니다.
+ * `reissued`는 3회 연속 틀려서 서버가 새 인증코드를 다시 보낸 경우입니다.
+ */
+export type SignupCodeError = 'invalid' | 'expired' | 'reissued';
 
 export const signupEmailErrorMessages = {
   format: '이메일 형식이 올바르지 않아요.',
@@ -20,6 +23,7 @@ export const signupEmailErrorMessages = {
 export const signupCodeErrorMessages = {
   invalid: '올바르지 않은 인증코드예요.',
   expired: '인증코드가 만료되었어요. 재전송 후 다시 입력해주세요.',
+  reissued: '3회 잘못 입력하여 인증코드를 다시 보냈어요. 새 코드를 입력해주세요.',
 } as const satisfies Record<SignupCodeError, string>;
 
 // 인증코드는 값만 담고, 자릿수는 isCodeComplete로 확인합니다.

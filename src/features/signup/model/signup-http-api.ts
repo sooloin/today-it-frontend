@@ -71,7 +71,14 @@ export function createHttpSignupApi(): SignupApi {
         return { verificationToken };
       } catch (error) {
         if (isApiError(error, 400, 'EMAIL_VERIFICATION_CODE_INVALID')) {
-          return 'invalid';
+          const { failureCount, maxFailureCount } = error.body ?? {};
+
+          // 마지막 시도까지 틀리면 서버가 새 인증코드를 메일로 다시 보냅니다.
+          return typeof failureCount === 'number' &&
+            typeof maxFailureCount === 'number' &&
+            failureCount >= maxFailureCount
+            ? 'reissued'
+            : 'invalid';
         }
 
         throw error;
