@@ -5,8 +5,8 @@ import { expect, fn, screen, userEvent, waitFor, within } from 'storybook/test';
 import { Button } from '@/shared/ui';
 
 import { signupRequestErrorMessage } from '../model/signup-api';
-import { createMockSignupApi } from '../model/signup-mock-api';
 import { SignupModal, type SignupModalProps } from './signup-modal';
+import { createStorySignupApi } from './signup-story-api';
 
 const meta = {
   title: 'Features/Signup/SignupModal',
@@ -21,7 +21,7 @@ const meta = {
     onOpenChange: fn(),
     loginHref: '/login',
     onComplete: fn(),
-    api: createMockSignupApi({ delayMs: 0 }),
+    api: createStorySignupApi({ delayMs: 0 }),
   },
 } satisfies Meta<typeof SignupModal>;
 
@@ -184,7 +184,7 @@ export const RetryAfterRequestError: Story = {
 export const IgnoreDuplicateClicks: Story = {
   args: {
     api: {
-      ...createMockSignupApi({ delayMs: 0 }),
+      ...createStorySignupApi({ delayMs: 0 }),
       requestCode: fn(async () => {
         await new Promise((resolve) => setTimeout(resolve, 300));
         return 'sent' as const;
