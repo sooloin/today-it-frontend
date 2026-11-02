@@ -65,6 +65,24 @@ export const EmailFormatError: Story = {
   },
 };
 
+export const EmailTooLong: Story = {
+  play: async ({ args }) => {
+    const dialog = await screen.findByRole('dialog');
+    const email = within(dialog).getByRole('textbox', { name: '이메일' });
+
+    // 서버는 이메일을 100자까지 받으므로 요청 전에 막습니다.
+    await userEvent.click(email);
+    await userEvent.paste(`${'a'.repeat(95)}@gmail.com`);
+    await userEvent.click(within(dialog).getByRole('button', { name: '다음' }));
+
+    await expect(within(dialog).getByRole('alert')).toHaveTextContent(
+      '이메일은 100자 이하로 입력해 주세요.',
+    );
+    await expect(email).toHaveAttribute('aria-invalid', 'true');
+    await expect(args.onRequestCode).not.toHaveBeenCalled();
+  },
+};
+
 export const RequestCode: Story = {
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');

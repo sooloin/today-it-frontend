@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export type SignupEmailPhase = 'email' | 'code';
-type SignupEmailClientError = 'format';
+type SignupEmailClientError = 'format' | 'length';
 /**
  * `registered`는 이미 가입, `social`은 소셜 로그인으로 가입된 이메일입니다.
  * `tooSoon`은 직전 발송 후 재전송 대기 시간이 지나지 않은 경우, `limitExceeded`는 발송 횟수 제한에 걸린 경우입니다.
@@ -25,6 +25,7 @@ const sendErrorMessages = {
 
 export const signupEmailErrorMessages = {
   format: '이메일 형식이 올바르지 않아요.',
+  length: '이메일은 100자 이하로 입력해 주세요.',
   registered: '이미 가입된 이메일이에요.',
   social: '소셜 로그인으로 가입된 이메일이에요.',
   tooSoon: sendErrorMessages.tooSoon,
@@ -40,9 +41,17 @@ export const signupCodeErrorMessages = {
   tooSoon: sendErrorMessages.tooSoon,
 } as const satisfies Record<SignupCodeError, string>;
 
+/** 서버가 받는 이메일의 최대 길이 */
+const SIGNUP_EMAIL_MAX_LENGTH = 100;
+
 // 인증코드는 값만 담고, 자릿수는 isCodeComplete로 확인합니다.
 export const signupEmailSchema = z.object({
-  email: z.string().trim().pipe(z.email(signupEmailErrorMessages.format)),
+  // 서버는 이메일을 100자까지 받습니다. 길이를 먼저 확인해 서버 요청 전에 막습니다.
+  email: z
+    .string()
+    .trim()
+    .max(SIGNUP_EMAIL_MAX_LENGTH, signupEmailErrorMessages.length)
+    .pipe(z.email(signupEmailErrorMessages.format)),
   code: z.string(),
 });
 
