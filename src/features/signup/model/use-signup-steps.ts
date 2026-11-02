@@ -127,6 +127,12 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     void submit(
       () => api.requestCode(email, { resend: true }),
       (result) => {
+        if (result === 'tooSoon' || result === 'limitExceeded') {
+          // 코드 단계의 재전송 오류는 이전 코드 오류를 대체해 코드 오류 자리에 하나만 보여줍니다.
+          setCodeError(result);
+          return;
+        }
+
         if (result !== 'sent') {
           setEmailError(result);
           return;

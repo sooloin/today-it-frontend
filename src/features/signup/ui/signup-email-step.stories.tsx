@@ -130,6 +130,15 @@ export const CodeLimitExceeded: Story = {
   },
 };
 
+export const CodeResendTooSoon: Story = {
+  args: {
+    phase: 'code',
+    defaultEmail: 'wowowoooo@gmail.com',
+    codeError: 'tooSoon',
+    timerSeconds: 272,
+  },
+};
+
 export const CodeReissued: Story = {
   args: {
     phase: 'code',
