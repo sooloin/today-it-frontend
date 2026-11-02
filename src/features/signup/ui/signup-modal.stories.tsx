@@ -181,6 +181,24 @@ export const RetryAfterRequestError: Story = {
   },
 };
 
+export const ClearRequestErrorOnEdit: Story = {
+  render,
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    await agreeAndGoToEmail(dialog);
+
+    const email = await within(dialog).findByRole('textbox', { name: '이메일' });
+
+    await userEvent.type(email, 'error@test.com{Enter}');
+    await expect(await within(dialog).findByText(signupRequestErrorMessage)).toBeInTheDocument();
+
+    // 입력을 고치면 다시 요청하지 않아도 이전 요청 실패 문구가 사라집니다.
+    await userEvent.type(email, 'x');
+    await expect(within(dialog).queryByText(signupRequestErrorMessage)).not.toBeInTheDocument();
+  },
+};
+
 export const IgnoreDuplicateClicks: Story = {
   args: {
     api: {

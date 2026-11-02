@@ -285,14 +285,23 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     requestCode,
     resendCode,
     verifyCode,
-    changeEmail: () => setEmailError(undefined),
+    // 입력을 고치면 이전 요청의 오류는 더 이상 맞지 않으므로 함께 지웁니다.
+    // 클라이언트 검증에서 걸리면 요청을 다시 보내지 않아 요청 실패 문구가 남을 수 있습니다.
+    changeEmail: () => {
+      setEmailError(undefined);
+      setRequestFailed(false);
+    },
     changeCode: () => {
       setCodeError(undefined);
       setEmailError(undefined);
+      setRequestFailed(false);
     },
     changeNickname,
     checkNickname,
-    changePassword: () => setPasswordError(undefined),
+    changePassword: () => {
+      setPasswordError(undefined);
+      setRequestFailed(false);
+    },
     submitProfile,
     startPreference,
     submitPreference,
