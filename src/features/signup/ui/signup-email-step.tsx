@@ -17,7 +17,7 @@ import {
   type SignupEmailServerError,
   type SignupEmailValues,
 } from '../model/signup-email';
-import { SignupFieldMessage } from './signup-field-message';
+import { SignupFieldMessage, SignupFieldMessageSlot } from './signup-field-message';
 import { SignupLoginLink } from './signup-login-link';
 
 export type { SignupEmailPhase };
@@ -165,9 +165,14 @@ export function SignupEmailStep({
             )}
           />
 
-          {emailErrorMessage ? (
-            <SignupFieldMessage id={emailErrorId}>{emailErrorMessage}</SignupFieldMessage>
-          ) : null}
+          {/* 인증코드 단계에서는 이메일이 잠겨 있어 오류가 나오지 않으므로 문구 자리를 두지 않습니다. */}
+          {isCodePhase ? null : (
+            <SignupFieldMessageSlot>
+              {emailErrorMessage ? (
+                <SignupFieldMessage id={emailErrorId}>{emailErrorMessage}</SignupFieldMessage>
+              ) : null}
+            </SignupFieldMessageSlot>
+          )}
         </div>
 
         {isCodePhase ? (
@@ -196,9 +201,11 @@ export function SignupEmailStep({
                 )}
               />
 
-              {codeErrorMessage ? (
-                <SignupFieldMessage id={codeErrorId}>{codeErrorMessage}</SignupFieldMessage>
-              ) : null}
+              <SignupFieldMessageSlot>
+                {codeErrorMessage ? (
+                  <SignupFieldMessage id={codeErrorId}>{codeErrorMessage}</SignupFieldMessage>
+                ) : null}
+              </SignupFieldMessageSlot>
             </div>
 
             <p className="flex items-baseline justify-center gap-8">

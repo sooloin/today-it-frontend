@@ -17,7 +17,7 @@ import {
   type SignupProfileValues,
 } from '../model/signup-profile';
 import { useNicknameCheckRequest } from '../model/use-nickname-check-request';
-import { SignupFieldMessage } from './signup-field-message';
+import { SignupFieldMessage, SignupFieldMessageSlot } from './signup-field-message';
 
 export interface SignupProfileStepProps {
   /** 프로필 이미지를 선택하면 호출되는 함수. 선택한 이미지 파일을 받습니다. */
@@ -163,14 +163,16 @@ export function SignupProfileStep({
               />
             )}
           />
-          {nicknameMessage ? (
-            <SignupFieldMessage
-              id={nicknameMessageId}
-              tone={isNicknameInvalid ? 'error' : 'success'}
-            >
-              {nicknameMessage}
-            </SignupFieldMessage>
-          ) : null}
+          <SignupFieldMessageSlot>
+            {nicknameMessage ? (
+              <SignupFieldMessage
+                id={nicknameMessageId}
+                tone={isNicknameInvalid ? 'error' : 'success'}
+              >
+                {nicknameMessage}
+              </SignupFieldMessage>
+            ) : null}
+          </SignupFieldMessageSlot>
         </div>
 
         <div className="flex flex-col gap-12">
@@ -197,9 +199,11 @@ export function SignupProfileStep({
               />
             )}
           />
-          {passwordMessage ? (
-            <SignupFieldMessage id={passwordMessageId}>{passwordMessage}</SignupFieldMessage>
-          ) : null}
+          <SignupFieldMessageSlot>
+            {passwordMessage ? (
+              <SignupFieldMessage id={passwordMessageId}>{passwordMessage}</SignupFieldMessage>
+            ) : null}
+          </SignupFieldMessageSlot>
         </div>
 
         {requestError ? (

@@ -65,6 +65,42 @@ export const EmailFormatError: Story = {
   },
 };
 
+export const KeepsHeightWhenErrorShows: Story = {
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+    const email = within(dialog).getByRole('textbox', { name: '이메일' });
+    const heightBefore = dialog.getBoundingClientRect().height;
+
+    // 오류 문구 자리가 미리 확보되어 있어 문구가 나타나도 모달 높이가 변하지 않습니다.
+    await userEvent.type(email, 'wowowoooo');
+    await userEvent.click(within(dialog).getByRole('button', { name: '다음' }));
+    await expect(within(dialog).getByRole('alert')).toBeInTheDocument();
+
+    await expect(dialog.getBoundingClientRect().height).toBe(heightBefore);
+  },
+};
+
+export const CodePhaseSpacing: Story = {
+  args: {
+    phase: 'code',
+    defaultEmail: 'wowowoooo@gmail.com',
+    defaultCode: '123456',
+    timerSeconds: 1680,
+  },
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+    const email = within(dialog).getByRole('textbox', { name: '이메일' });
+    const code = within(dialog).getByRole('textbox', { name: '인증코드' });
+
+    // 시안: 잠긴 이메일 입력창과 인증코드 입력창 사이는 24px이고, 이메일 아래에는 문구 자리가 없습니다.
+    const gap = code.getBoundingClientRect().top - email.getBoundingClientRect().bottom;
+
+    // 입력창 테두리 1px 정도의 오차는 허용합니다. 문구 자리가 있으면 56px 가까이 벌어집니다.
+    await expect(gap).toBeGreaterThanOrEqual(24);
+    await expect(gap).toBeLessThan(28);
+  },
+};
+
 export const EmailTooLong: Story = {
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
