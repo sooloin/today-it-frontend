@@ -20,7 +20,7 @@ export type SignupCodeError = 'invalid' | 'expired' | 'reissued' | 'limitExceede
 // 이메일 단계의 첫 발송과 코드 단계의 재전송이 같은 문구를 씁니다.
 const sendErrorMessages = {
   tooSoon: '인증코드는 1분 후에 다시 요청할 수 있어요.',
-  limitExceeded: '인증 요청 횟수를 초과했어요. 30분 후 다시 시도해 주세요.',
+  limitExceeded: '인증번호 발송 횟수를 초과했어요. 30분 후 다시 시도해주세요.',
 } as const;
 
 export const signupEmailErrorMessages = {

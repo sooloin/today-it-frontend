@@ -126,7 +126,15 @@ export const CodeLimitExceeded: Story = {
     phase: 'code',
     defaultEmail: 'wowowoooo@gmail.com',
     codeError: 'limitExceeded',
+    isResendDisabled: true,
     timerSeconds: 272,
+  },
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    // 발송 횟수 제한(30분 차단) 중에는 재전송을 누를 수 없습니다.
+    await expect(within(dialog).getByRole('button', { name: '재전송' })).toBeDisabled();
+    await expect(within(dialog).getByText(/발송 횟수를 초과했어요/)).toBeInTheDocument();
   },
 };
 

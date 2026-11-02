@@ -85,6 +85,7 @@ export function SignupModal({
           codeError={flow.codeError}
           defaultEmail={flow.email}
           emailError={flow.emailError}
+          isResendDisabled={flow.isResendBlocked}
           isSubmitting={flow.isSubmitting}
           loginHref={loginHref}
           onCodeChange={flow.changeCode}

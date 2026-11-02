@@ -50,6 +50,8 @@ export interface SignupEmailStepProps {
   onSocialLogin?: (provider: SignupSocialProvider) => void;
   /** 서버 요청이 진행 중인지 나타냅니다. 진행 중에는 다음 버튼과 재전송이 비활성화됩니다. */
   isSubmitting?: boolean;
+  /** 발송 횟수 제한(30분 차단)에 걸려 재전송을 막아야 하는지 나타냅니다. */
+  isResendDisabled?: boolean;
   /** 서버 요청이 실패했는지 나타냅니다. 같은 버튼을 다시 눌러 재시도합니다. */
   requestError?: boolean;
   /** 이미 계정이 있는 사용자가 이동할 로그인 경로 */
@@ -67,6 +69,7 @@ export function SignupEmailStep({
   defaultCode = '',
   defaultEmail = '',
   emailError,
+  isResendDisabled = false,
   isSubmitting = false,
   loginHref,
   onCodeChange,
@@ -202,7 +205,7 @@ export function SignupEmailStep({
               <span className="text-caption-c1 text-text-tertiary">인증코드를 못 받으셨나요?</span>
               <button
                 className="inline-flex cursor-pointer items-start bg-transparent p-0 text-body-b2 whitespace-nowrap text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-border-active focus-visible:ring-offset-2 disabled:cursor-default disabled:text-text-disabled"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isResendDisabled}
                 onClick={() => {
                   setValue('code', '');
                   onResendCode();

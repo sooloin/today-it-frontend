@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type SignupApi } from './signup-api';
 import {
@@ -15,6 +15,9 @@ import {
 } from './signup-profile';
 import { type SignupTermId } from './signup-terms';
 import { useCountdown } from './use-countdown';
+
+/** 인증코드 발송 횟수 제한에 걸렸을 때 서버가 발송을 막는 시간(30분) */
+const SEND_LIMIT_BLOCK_MS = 30 * 60 * 1000;
 
 type SignupStep = 'terms' | 'email' | 'profile' | 'complete' | 'preference';
 
@@ -34,6 +37,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
   const [agreedIds, setAgreedIds] = useState<SignupTermId[]>([]);
   const [email, setEmail] = useState('');
   const [verificationToken, setVerificationToken] = useState('');
+  const [isResendBlocked, setIsResendBlocked] = useState(false);
   const [emailError, setEmailError] = useState<SignupEmailServerError>();
   const [codeError, setCodeError] = useState<SignupCodeError>();
   const [nicknameStatus, setNicknameStatus] = useState<SignupNicknameStatus>();
@@ -82,6 +86,17 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     }
   }
 
+  // 발송 횟수 제한에 걸리면 서버가 막는 30분 동안 재전송을 막고, 시간이 지나면 풉니다.
+  useEffect(() => {
+    if (!isResendBlocked) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => setIsResendBlocked(false), SEND_LIMIT_BLOCK_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [isResendBlocked]);
+
   const reset = useCallback(() => {
     generationRef.current += 1;
     nicknameRequestRef.current += 1;
@@ -93,6 +108,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     setAgreedIds([]);
     setEmail('');
     setVerificationToken('');
+    setIsResendBlocked(false);
     setEmailError(undefined);
     setCodeError(undefined);
     setNicknameStatus(undefined);
@@ -130,6 +146,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
         if (result === 'tooSoon' || result === 'limitExceeded') {
           // 코드 단계의 재전송 오류는 이전 코드 오류를 대체해 코드 오류 자리에 하나만 보여줍니다.
           setCodeError(result);
+          setIsResendBlocked(result === 'limitExceeded');
           return;
         }
 
@@ -156,6 +173,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
       (result) => {
         if (typeof result === 'string') {
           setCodeError(result);
+          setIsResendBlocked(result === 'limitExceeded');
 
           // 서버가 새 인증코드를 보냈으므로 유효 시간을 다시 셉니다.
           if (result === 'reissued') {
@@ -262,6 +280,7 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     passwordError,
     isSubmitting,
     requestFailed,
+    isResendBlocked,
     agreeTerms,
     requestCode,
     resendCode,
