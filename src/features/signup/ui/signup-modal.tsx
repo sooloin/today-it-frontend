@@ -102,6 +102,7 @@ export function SignupModal({
 
       {flow.step === 'profile' ? (
         <SignupProfileStep
+          isAvatarDisabled={!flow.agreedIds.includes('profile-image')}
           isSubmitting={flow.isSubmitting}
           nicknameStatus={flow.nicknameStatus}
           onCheckNickname={flow.checkNickname}

@@ -95,6 +95,47 @@ export const FullFlow: Story = {
   },
 };
 
+async function goToProfileStep(dialog: HTMLElement) {
+  await userEvent.type(
+    await within(dialog).findByRole('textbox', { name: '이메일' }),
+    'user@test.com{Enter}',
+  );
+  await userEvent.type(
+    await within(dialog).findByRole('textbox', { name: '인증코드' }),
+    '123456{Enter}',
+  );
+  await within(dialog).findByRole('textbox', { name: '닉네임' });
+}
+
+export const AvatarDisabledWithoutProfileImageConsent: Story = {
+  render,
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    // 필수 약관만 동의하고 프로필 이미지 수집·이용에는 동의하지 않습니다.
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: /서비스 이용약관/ }));
+    await userEvent.click(
+      within(dialog).getByRole('checkbox', { name: /개인정보 수집·이용 동의/ }),
+    );
+    await userEvent.click(within(dialog).getByRole('button', { name: '다음' }));
+    await goToProfileStep(dialog);
+
+    await expect(within(dialog).getByRole('button', { name: '프로필 이미지 선택' })).toBeDisabled();
+  },
+};
+
+export const AvatarEnabledWithProfileImageConsent: Story = {
+  render,
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    await agreeAndGoToEmail(dialog);
+    await goToProfileStep(dialog);
+
+    await expect(within(dialog).getByRole('button', { name: '프로필 이미지 선택' })).toBeEnabled();
+  },
+};
+
 export const FullFlowWithPreference: Story = {
   render,
   play: async ({ args }) => {

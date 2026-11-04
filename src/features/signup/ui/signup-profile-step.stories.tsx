@@ -215,6 +215,19 @@ export const SelectAvatar: Story = {
   },
 };
 
+export const AvatarDisabledWithoutConsent: Story = {
+  args: { isAvatarDisabled: true },
+  play: async ({ args }) => {
+    const dialog = await screen.findByRole('dialog');
+    const input = dialog.querySelector<HTMLInputElement>('input[type="file"]');
+
+    // 프로필 이미지 수집·이용에 동의하지 않으면 이미지를 선택할 수 없습니다.
+    await expect(within(dialog).getByRole('button', { name: '프로필 이미지 선택' })).toBeDisabled();
+    await expect(input).toBeDisabled();
+    await expect(args.onAvatarChange).not.toHaveBeenCalled();
+  },
+};
+
 export const IgnoreNonImageFile: Story = {
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
