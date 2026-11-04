@@ -5,8 +5,8 @@ import { expect, fn, screen, userEvent, waitFor, within } from 'storybook/test';
 import { Button } from '@/shared/ui';
 
 import { signupRequestErrorMessage } from '../model/signup-api';
-import { createMockSignupApi } from '../model/signup-mock-api';
 import { SignupModal, type SignupModalProps } from './signup-modal';
+import { createStorySignupApi } from './signup-story-api';
 
 const meta = {
   title: 'Features/Signup/SignupModal',
@@ -21,7 +21,7 @@ const meta = {
     onOpenChange: fn(),
     loginHref: '/login',
     onComplete: fn(),
-    api: createMockSignupApi({ delayMs: 0 }),
+    api: createStorySignupApi({ delayMs: 0 }),
   },
 } satisfies Meta<typeof SignupModal>;
 
@@ -83,7 +83,7 @@ export const FullFlow: Story = {
 
     await userEvent.type(
       within(dialog).getByLabelText('비밀번호', { selector: 'input' }),
-      'godari13620{Enter}',
+      'godari1362!0{Enter}',
     );
 
     // 가입 완료 안내에서 나중에 설정하면 선호 지역 단계 없이 끝납니다.
@@ -92,6 +92,47 @@ export const FullFlow: Story = {
 
     await waitFor(() => expect(args.onComplete).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  },
+};
+
+async function goToProfileStep(dialog: HTMLElement) {
+  await userEvent.type(
+    await within(dialog).findByRole('textbox', { name: '이메일' }),
+    'user@test.com{Enter}',
+  );
+  await userEvent.type(
+    await within(dialog).findByRole('textbox', { name: '인증코드' }),
+    '123456{Enter}',
+  );
+  await within(dialog).findByRole('textbox', { name: '닉네임' });
+}
+
+export const AvatarDisabledWithoutProfileImageConsent: Story = {
+  render,
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    // 필수 약관만 동의하고 프로필 이미지 수집·이용에는 동의하지 않습니다.
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: /서비스 이용약관/ }));
+    await userEvent.click(
+      within(dialog).getByRole('checkbox', { name: /개인정보 수집·이용 동의/ }),
+    );
+    await userEvent.click(within(dialog).getByRole('button', { name: '다음' }));
+    await goToProfileStep(dialog);
+
+    await expect(within(dialog).getByRole('button', { name: '프로필 이미지 선택' })).toBeDisabled();
+  },
+};
+
+export const AvatarEnabledWithProfileImageConsent: Story = {
+  render,
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    await agreeAndGoToEmail(dialog);
+    await goToProfileStep(dialog);
+
+    await expect(within(dialog).getByRole('button', { name: '프로필 이미지 선택' })).toBeEnabled();
   },
 };
 
@@ -117,7 +158,7 @@ export const FullFlowWithPreference: Story = {
     await within(dialog).findByText('사용 가능한 닉네임이에요.', {}, { timeout: 3000 });
     await userEvent.type(
       within(dialog).getByLabelText('비밀번호', { selector: 'input' }),
-      'godari13620{Enter}',
+      'godari1362!0{Enter}',
     );
 
     // 취향 알려주기를 누르면 선호 지역·컨셉 단계로 이동하고, 아직 가입은 끝나지 않습니다.
@@ -181,10 +222,76 @@ export const RetryAfterRequestError: Story = {
   },
 };
 
+export const ClearRequestErrorOnEdit: Story = {
+  render,
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    await agreeAndGoToEmail(dialog);
+
+    const email = await within(dialog).findByRole('textbox', { name: '이메일' });
+
+    await userEvent.type(email, 'error@test.com{Enter}');
+    await expect(await within(dialog).findByText(signupRequestErrorMessage)).toBeInTheDocument();
+
+    // 입력을 고치면 다시 요청하지 않아도 이전 요청 실패 문구가 사라집니다.
+    await userEvent.type(email, 'x');
+    await expect(within(dialog).queryByText(signupRequestErrorMessage)).not.toBeInTheDocument();
+  },
+};
+
+export const KeepResendBlockedAfterWrongCode: Story = {
+  args: {
+    api: {
+      ...createStorySignupApi({ delayMs: 0 }),
+      // 첫 발송은 성공하고, 재전송은 발송 횟수 제한(30분 차단)에 걸립니다.
+      requestCode: fn(async (_email: string, options?: { resend?: boolean }) =>
+        options?.resend ? ('limitExceeded' as const) : ('sent' as const),
+      ),
+      verifyCode: fn(async () => 'invalid' as const),
+    },
+  },
+  render,
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    await agreeAndGoToEmail(dialog);
+    await userEvent.type(
+      await within(dialog).findByRole('textbox', { name: '이메일' }),
+      'user@test.com{Enter}',
+    );
+
+    const resend = await within(dialog).findByRole('button', { name: '재전송' });
+
+    await userEvent.click(resend);
+    await within(dialog).findByText(/발송 횟수를 초과했어요/);
+    await expect(resend).toBeDisabled();
+
+    // 코드를 입력해도 차단 중에는 재전송이 막힌 이유(안내 문구)가 계속 보입니다.
+    const code = within(dialog).getByRole('textbox', { name: '인증코드' });
+
+    await userEvent.type(code, '123456');
+    await expect(within(dialog).getByText(/발송 횟수를 초과했어요/)).toBeInTheDocument();
+    await expect(resend).toBeDisabled();
+
+    // 틀린 코드로 '다음'을 눌러도 30분 차단은 풀리지 않습니다.
+    await userEvent.click(within(dialog).getByRole('button', { name: '다음' }));
+    await within(dialog).findByText('올바르지 않은 인증코드예요.');
+    await expect(resend).toBeDisabled();
+
+    // 코드를 다시 고치면 불일치 문구는 사라지고 차단 안내가 다시 보입니다.
+    await userEvent.clear(code);
+    await userEvent.type(code, '1');
+    await expect(within(dialog).getByText(/발송 횟수를 초과했어요/)).toBeInTheDocument();
+    await expect(within(dialog).queryByText('올바르지 않은 인증코드예요.')).not.toBeInTheDocument();
+    await expect(resend).toBeDisabled();
+  },
+};
+
 export const IgnoreDuplicateClicks: Story = {
   args: {
     api: {
-      ...createMockSignupApi({ delayMs: 0 }),
+      ...createStorySignupApi({ delayMs: 0 }),
       requestCode: fn(async () => {
         await new Promise((resolve) => setTimeout(resolve, 300));
         return 'sent' as const;

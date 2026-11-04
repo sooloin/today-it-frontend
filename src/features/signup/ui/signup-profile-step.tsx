@@ -17,9 +17,11 @@ import {
   type SignupProfileValues,
 } from '../model/signup-profile';
 import { useNicknameCheckRequest } from '../model/use-nickname-check-request';
-import { SignupFieldMessage } from './signup-field-message';
+import { SignupFieldMessage, SignupFieldMessageSlot } from './signup-field-message';
 
 export interface SignupProfileStepProps {
+  /** 프로필 이미지 수집·이용에 동의하지 않았을 때 이미지 선택을 막습니다. */
+  isAvatarDisabled?: boolean;
   /** 프로필 이미지를 선택하면 호출되는 함수. 선택한 이미지 파일을 받습니다. */
   onAvatarChange?: (file: File) => void;
   /** 닉네임의 초기값 */
@@ -51,6 +53,7 @@ export interface SignupProfileStepProps {
 export function SignupProfileStep({
   defaultNickname = '',
   defaultPassword = '',
+  isAvatarDisabled = false,
   isSubmitting = false,
   nicknameStatus,
   onAvatarChange,
@@ -115,8 +118,9 @@ export function SignupProfileStep({
       <div className="flex justify-center">
         <AvatarUploader
           alt={avatarSrc ? '선택한 프로필 이미지' : undefined}
+          disabled={isAvatarDisabled}
           onFileSelect={(file) => {
-            if (!file.type.startsWith('image/')) {
+            if (isAvatarDisabled || !file.type.startsWith('image/')) {
               return;
             }
 
@@ -138,7 +142,7 @@ export function SignupProfileStep({
           }
         }}
       >
-        <div className="flex flex-col gap-24">
+        <div className="flex flex-col gap-12">
           <Controller
             control={control}
             name="nickname"
@@ -163,17 +167,19 @@ export function SignupProfileStep({
               />
             )}
           />
-          {nicknameMessage ? (
-            <SignupFieldMessage
-              id={nicknameMessageId}
-              tone={isNicknameInvalid ? 'error' : 'success'}
-            >
-              {nicknameMessage}
-            </SignupFieldMessage>
-          ) : null}
+          <SignupFieldMessageSlot>
+            {nicknameMessage ? (
+              <SignupFieldMessage
+                id={nicknameMessageId}
+                tone={isNicknameInvalid ? 'error' : 'success'}
+              >
+                {nicknameMessage}
+              </SignupFieldMessage>
+            ) : null}
+          </SignupFieldMessageSlot>
         </div>
 
-        <div className="flex flex-col gap-24">
+        <div className="flex flex-col gap-12">
           <Controller
             control={control}
             name="password"
@@ -197,9 +203,11 @@ export function SignupProfileStep({
               />
             )}
           />
-          {passwordMessage ? (
-            <SignupFieldMessage id={passwordMessageId}>{passwordMessage}</SignupFieldMessage>
-          ) : null}
+          <SignupFieldMessageSlot>
+            {passwordMessage ? (
+              <SignupFieldMessage id={passwordMessageId}>{passwordMessage}</SignupFieldMessage>
+            ) : null}
+          </SignupFieldMessageSlot>
         </div>
 
         {requestError ? (

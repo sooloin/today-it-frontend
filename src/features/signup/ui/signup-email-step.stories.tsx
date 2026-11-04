@@ -65,6 +65,60 @@ export const EmailFormatError: Story = {
   },
 };
 
+export const KeepsHeightWhenErrorShows: Story = {
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+    const email = within(dialog).getByRole('textbox', { name: '이메일' });
+    const heightBefore = dialog.getBoundingClientRect().height;
+
+    // 오류 문구 자리가 미리 확보되어 있어 문구가 나타나도 모달 높이가 변하지 않습니다.
+    await userEvent.type(email, 'wowowoooo');
+    await userEvent.click(within(dialog).getByRole('button', { name: '다음' }));
+    await expect(within(dialog).getByRole('alert')).toBeInTheDocument();
+
+    await expect(dialog.getBoundingClientRect().height).toBe(heightBefore);
+  },
+};
+
+export const CodePhaseSpacing: Story = {
+  args: {
+    phase: 'code',
+    defaultEmail: 'wowowoooo@gmail.com',
+    defaultCode: '123456',
+    timerSeconds: 1680,
+  },
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+    const email = within(dialog).getByRole('textbox', { name: '이메일' });
+    const code = within(dialog).getByRole('textbox', { name: '인증코드' });
+
+    // 시안: 잠긴 이메일 입력창과 인증코드 입력창 사이는 24px이고, 이메일 아래에는 문구 자리가 없습니다.
+    const gap = code.getBoundingClientRect().top - email.getBoundingClientRect().bottom;
+
+    // 입력창 테두리 1px 정도의 오차는 허용합니다. 문구 자리가 있으면 56px 가까이 벌어집니다.
+    await expect(gap).toBeGreaterThanOrEqual(24);
+    await expect(gap).toBeLessThan(28);
+  },
+};
+
+export const EmailTooLong: Story = {
+  play: async ({ args }) => {
+    const dialog = await screen.findByRole('dialog');
+    const email = within(dialog).getByRole('textbox', { name: '이메일' });
+
+    // 서버는 이메일을 100자까지 받으므로 요청 전에 막습니다.
+    await userEvent.click(email);
+    await userEvent.paste(`${'a'.repeat(95)}@gmail.com`);
+    await userEvent.click(within(dialog).getByRole('button', { name: '다음' }));
+
+    await expect(within(dialog).getByRole('alert')).toHaveTextContent(
+      '이메일은 100자 이하로 입력해 주세요.',
+    );
+    await expect(email).toHaveAttribute('aria-invalid', 'true');
+    await expect(args.onRequestCode).not.toHaveBeenCalled();
+  },
+};
+
 export const RequestCode: Story = {
   play: async ({ args }) => {
     const dialog = await screen.findByRole('dialog');
@@ -110,6 +164,49 @@ export const CodeInvalid: Story = {
     defaultCode: '010000',
     codeError: 'invalid',
     timerSeconds: 272,
+  },
+};
+
+export const SendLimitExceeded: Story = {
+  args: { defaultEmail: 'poppop@gmail.com', emailError: 'limitExceeded' },
+};
+
+export const VerificationExpired: Story = {
+  args: { defaultEmail: 'poppop@gmail.com', emailError: 'verificationExpired' },
+};
+
+export const CodeLimitExceeded: Story = {
+  args: {
+    phase: 'code',
+    defaultEmail: 'wowowoooo@gmail.com',
+    codeError: 'limitExceeded',
+    isResendDisabled: true,
+    timerSeconds: 272,
+  },
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    // 발송 횟수 제한(30분 차단) 중에는 재전송을 누를 수 없습니다.
+    await expect(within(dialog).getByRole('button', { name: '재전송' })).toBeDisabled();
+    await expect(within(dialog).getByText(/발송 횟수를 초과했어요/)).toBeInTheDocument();
+  },
+};
+
+export const CodeResendTooSoon: Story = {
+  args: {
+    phase: 'code',
+    defaultEmail: 'wowowoooo@gmail.com',
+    codeError: 'tooSoon',
+    timerSeconds: 272,
+  },
+};
+
+export const CodeReissued: Story = {
+  args: {
+    phase: 'code',
+    defaultEmail: 'wowowoooo@gmail.com',
+    codeError: 'reissued',
+    timerSeconds: SIGNUP_CODE_EXPIRES_SECONDS,
   },
 };
 

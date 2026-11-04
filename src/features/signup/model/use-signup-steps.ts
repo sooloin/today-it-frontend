@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type SignupApi } from './signup-api';
 import {
@@ -15,6 +15,9 @@ import {
 } from './signup-profile';
 import { type SignupTermId } from './signup-terms';
 import { useCountdown } from './use-countdown';
+
+/** 인증코드 발송 횟수 제한에 걸렸을 때 서버가 발송을 막는 시간(30분) */
+const SEND_LIMIT_BLOCK_MS = 30 * 60 * 1000;
 
 type SignupStep = 'terms' | 'email' | 'profile' | 'complete' | 'preference';
 
@@ -33,6 +36,8 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
   const [phase, setPhase] = useState<SignupEmailPhase>('email');
   const [agreedIds, setAgreedIds] = useState<SignupTermId[]>([]);
   const [email, setEmail] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
+  const [isResendBlocked, setIsResendBlocked] = useState(false);
   const [emailError, setEmailError] = useState<SignupEmailServerError>();
   const [codeError, setCodeError] = useState<SignupCodeError>();
   const [nicknameStatus, setNicknameStatus] = useState<SignupNicknameStatus>();
@@ -81,6 +86,17 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     }
   }
 
+  // 발송 횟수 제한에 걸리면 서버가 막는 30분 동안 재전송을 막고, 시간이 지나면 풉니다.
+  useEffect(() => {
+    if (!isResendBlocked) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => setIsResendBlocked(false), SEND_LIMIT_BLOCK_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [isResendBlocked]);
+
   const reset = useCallback(() => {
     generationRef.current += 1;
     nicknameRequestRef.current += 1;
@@ -91,6 +107,8 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     setPhase('email');
     setAgreedIds([]);
     setEmail('');
+    setVerificationToken('');
+    setIsResendBlocked(false);
     setEmailError(undefined);
     setCodeError(undefined);
     setNicknameStatus(undefined);
@@ -123,13 +141,27 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
 
   function resendCode() {
     void submit(
-      () => api.requestCode(email),
+      () => api.requestCode(email, { resend: true }),
       (result) => {
+        if (result === 'limitExceeded') {
+          // 차단 안내는 codeError가 아니라 차단 상태에서 파생해 보여줍니다. 이전 코드 오류는 지웁니다.
+          setCodeError(undefined);
+          setIsResendBlocked(true);
+          return;
+        }
+
+        if (result === 'tooSoon') {
+          // 코드 단계의 재전송 오류는 이전 코드 오류를 대체해 코드 오류 자리에 하나만 보여줍니다.
+          setCodeError(result);
+          return;
+        }
+
         if (result !== 'sent') {
           setEmailError(result);
           return;
         }
 
+        setEmailError(undefined);
         setCodeError(undefined);
         startCountdown();
       },
@@ -145,13 +177,27 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     void submit(
       () => api.verifyCode(email, code),
       (result) => {
-        if (result === 'verified') {
-          setRequestFailed(false);
-          setStep('profile');
+        if (typeof result === 'string') {
+          if (result === 'limitExceeded') {
+            // 3회 실패 후 자동 재발송이 한도에 걸린 경우입니다. 차단 안내는 차단 상태에서 파생해 보여줍니다.
+            setCodeError(undefined);
+            setIsResendBlocked(true);
+            return;
+          }
+
+          setCodeError(result);
+
+          // 서버가 새 인증코드를 보냈으므로 유효 시간을 다시 셉니다.
+          if (result === 'reissued') {
+            startCountdown();
+          }
+
           return;
         }
 
-        setCodeError(result);
+        setVerificationToken(result.verificationToken);
+        setRequestFailed(false);
+        setStep('profile');
       },
     );
   }
@@ -188,10 +234,30 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
 
   function submitProfile(profile: SignupProfileValues) {
     void submit(
-      () => api.signup({ ...profile, email }),
+      () => api.signup({ ...profile, email, verificationToken, agreedIds }),
       (result) => {
         if (result === 'created') {
           setStep('complete');
+          return;
+        }
+
+        if (result === 'nicknameDuplicated') {
+          setNicknameStatus('duplicated');
+          return;
+        }
+
+        if (result === 'verificationExpired' || result === 'emailRegistered') {
+          // 이메일 인증을 처음부터 다시 해야 하므로 이메일 단계로 돌아갑니다.
+          setVerificationToken('');
+          resetCountdown();
+          setCodeError(undefined);
+          // 프로필 단계는 다시 빈 입력으로 열리므로 이전 닉네임 검사 결과와 비밀번호 오류도 버립니다.
+          nicknameRequestRef.current += 1;
+          setNicknameStatus(undefined);
+          setPasswordError(undefined);
+          setPhase('email');
+          setEmailError(result === 'emailRegistered' ? 'registered' : 'verificationExpired');
+          setStep('email');
           return;
         }
 
@@ -220,21 +286,38 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     agreedIds,
     email,
     emailError,
-    codeError: codeError ?? (isExpired ? ('expired' as const) : undefined),
+    // 재전송이 막혀 있는 동안에는 다른 오류가 없을 때 차단 안내를 보여줘서, 버튼이 비활성인 이유가 항상 보이게 합니다.
+    // 차단 해제와 안내 제거가 같은 상태(isResendBlocked)를 따르므로 서로 어긋나지 않습니다.
+    codeError:
+      codeError ??
+      (isResendBlocked ? ('limitExceeded' as const) : isExpired ? ('expired' as const) : undefined),
     timerSeconds: secondsLeft,
     nicknameStatus,
     passwordError,
     isSubmitting,
     requestFailed,
+    isResendBlocked,
     agreeTerms,
     requestCode,
     resendCode,
     verifyCode,
-    changeEmail: () => setEmailError(undefined),
-    changeCode: () => setCodeError(undefined),
+    // 입력을 고치면 이전 요청의 오류는 더 이상 맞지 않으므로 함께 지웁니다.
+    // 클라이언트 검증에서 걸리면 요청을 다시 보내지 않아 요청 실패 문구가 남을 수 있습니다.
+    changeEmail: () => {
+      setEmailError(undefined);
+      setRequestFailed(false);
+    },
+    changeCode: () => {
+      setCodeError(undefined);
+      setEmailError(undefined);
+      setRequestFailed(false);
+    },
     changeNickname,
     checkNickname,
-    changePassword: () => setPasswordError(undefined),
+    changePassword: () => {
+      setPasswordError(undefined);
+      setRequestFailed(false);
+    },
     submitProfile,
     startPreference,
     submitPreference,

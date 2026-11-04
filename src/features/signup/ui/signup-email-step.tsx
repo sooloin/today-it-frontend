@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useId } from 'react';
+import { useEffect, useId } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { Button, CodeInput, Divider, ModalTitle, SocialLoginButton, TextInput } from '@/shared/ui';
@@ -17,7 +17,7 @@ import {
   type SignupEmailServerError,
   type SignupEmailValues,
 } from '../model/signup-email';
-import { SignupFieldMessage } from './signup-field-message';
+import { SignupFieldMessage, SignupFieldMessageSlot } from './signup-field-message';
 import { SignupLoginLink } from './signup-login-link';
 
 export type { SignupEmailPhase };
@@ -50,6 +50,8 @@ export interface SignupEmailStepProps {
   onSocialLogin?: (provider: SignupSocialProvider) => void;
   /** 서버 요청이 진행 중인지 나타냅니다. 진행 중에는 다음 버튼과 재전송이 비활성화됩니다. */
   isSubmitting?: boolean;
+  /** 발송 횟수 제한(30분 차단)에 걸려 재전송을 막아야 하는지 나타냅니다. */
+  isResendDisabled?: boolean;
   /** 서버 요청이 실패했는지 나타냅니다. 같은 버튼을 다시 눌러 재시도합니다. */
   requestError?: boolean;
   /** 이미 계정이 있는 사용자가 이동할 로그인 경로 */
@@ -67,6 +69,7 @@ export function SignupEmailStep({
   defaultCode = '',
   defaultEmail = '',
   emailError,
+  isResendDisabled = false,
   isSubmitting = false,
   loginHref,
   onCodeChange,
@@ -95,9 +98,18 @@ export function SignupEmailStep({
   const code = useWatch({ control, name: 'code' });
   const isCodePhase = phase === 'code';
 
+  // 새 인증코드가 다시 발송되면 이전에 입력한 코드를 비웁니다.
+  useEffect(() => {
+    if (codeError === 'reissued') {
+      setValue('code', '');
+    }
+  }, [codeError, setValue]);
+
   const emailErrorMessage =
     (isSubmitted ? errors.email?.message : undefined) ??
-    (emailError === 'registered' ? signupEmailErrorMessages.registered : undefined);
+    (emailError !== undefined && emailError !== 'social'
+      ? signupEmailErrorMessages[emailError]
+      : undefined);
   const socialErrorMessage = emailError === 'social' ? signupEmailErrorMessages.social : undefined;
   const codeErrorMessage = codeError ? signupCodeErrorMessages[codeError] : undefined;
   const isNextDisabled = isCodePhase ? !isCodeComplete(code) : email.trim() === '';
@@ -126,70 +138,81 @@ export function SignupEmailStep({
           )(event);
         }}
       >
-        <Controller
-          control={control}
-          name="email"
-          render={({ field }) => (
-            <TextInput
-              aria-describedby={emailErrorMessage ? emailErrorId : undefined}
-              aria-invalid={emailErrorMessage !== undefined}
-              aria-label="이메일"
-              autoComplete="email"
-              className="w-full"
-              disabled={isCodePhase || isSubmitting}
-              inputMode="email"
-              name={field.name}
-              onBlur={field.onBlur}
-              onValueChange={(value) => {
-                field.onChange(value);
-                onEmailChange?.(value);
-              }}
-              placeholder="이메일을 입력해주세요"
-              ref={field.ref}
-              type="email"
-              value={field.value}
-            />
-          )}
-        />
+        <div className="flex flex-col gap-12">
+          <Controller
+            control={control}
+            name="email"
+            render={({ field }) => (
+              <TextInput
+                aria-describedby={emailErrorMessage ? emailErrorId : undefined}
+                aria-invalid={emailErrorMessage !== undefined}
+                aria-label="이메일"
+                autoComplete="email"
+                className="w-full"
+                disabled={isCodePhase || isSubmitting}
+                inputMode="email"
+                name={field.name}
+                onBlur={field.onBlur}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  onEmailChange?.(value);
+                }}
+                placeholder="이메일을 입력해주세요"
+                ref={field.ref}
+                type="email"
+                value={field.value}
+              />
+            )}
+          />
 
-        {emailErrorMessage ? (
-          <SignupFieldMessage id={emailErrorId}>{emailErrorMessage}</SignupFieldMessage>
-        ) : null}
+          {/* 인증코드 단계에서는 이메일이 잠겨 있어 오류가 나오지 않으므로 문구 자리를 두지 않습니다. */}
+          {isCodePhase ? null : (
+            <SignupFieldMessageSlot>
+              {emailErrorMessage ? (
+                <SignupFieldMessage id={emailErrorId}>{emailErrorMessage}</SignupFieldMessage>
+              ) : null}
+            </SignupFieldMessageSlot>
+          )}
+        </div>
 
         {isCodePhase ? (
           <>
-            <Controller
-              control={control}
-              name="code"
-              render={({ field }) => (
-                <CodeInput
-                  aria-describedby={codeErrorMessage ? codeErrorId : undefined}
-                  aria-invalid={codeErrorMessage !== undefined}
-                  aria-label="인증코드"
-                  autoFocus
-                  className="w-full"
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    onCodeChange?.(value);
-                  }}
-                  ref={field.ref}
-                  timerSeconds={timerSeconds}
-                  value={field.value}
-                />
-              )}
-            />
+            <div className="flex flex-col gap-12">
+              <Controller
+                control={control}
+                name="code"
+                render={({ field }) => (
+                  <CodeInput
+                    aria-describedby={codeErrorMessage ? codeErrorId : undefined}
+                    aria-invalid={codeErrorMessage !== undefined}
+                    aria-label="인증코드"
+                    autoFocus
+                    className="w-full"
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      onCodeChange?.(value);
+                    }}
+                    ref={field.ref}
+                    timerSeconds={timerSeconds}
+                    value={field.value}
+                  />
+                )}
+              />
 
-            {codeErrorMessage ? (
-              <SignupFieldMessage id={codeErrorId}>{codeErrorMessage}</SignupFieldMessage>
-            ) : null}
+              <SignupFieldMessageSlot>
+                {codeErrorMessage ? (
+                  <SignupFieldMessage id={codeErrorId}>{codeErrorMessage}</SignupFieldMessage>
+                ) : null}
+              </SignupFieldMessageSlot>
+            </div>
 
             <p className="flex items-baseline justify-center gap-8">
               <span className="text-caption-c1 text-text-tertiary">인증코드를 못 받으셨나요?</span>
               <button
                 className="inline-flex cursor-pointer items-start bg-transparent p-0 text-body-b2 whitespace-nowrap text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-border-active focus-visible:ring-offset-2 disabled:cursor-default disabled:text-text-disabled"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isResendDisabled}
                 onClick={() => {
                   setValue('code', '');
                   onResendCode();
