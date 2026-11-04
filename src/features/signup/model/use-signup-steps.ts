@@ -146,7 +146,12 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
         if (result === 'tooSoon' || result === 'limitExceeded') {
           // 코드 단계의 재전송 오류는 이전 코드 오류를 대체해 코드 오류 자리에 하나만 보여줍니다.
           setCodeError(result);
-          setIsResendBlocked(result === 'limitExceeded');
+
+          // 차단은 시간이 지나거나 모달을 닫아야 풀리므로, 다른 결과로 해제하지 않습니다.
+          if (result === 'limitExceeded') {
+            setIsResendBlocked(true);
+          }
+
           return;
         }
 
@@ -173,7 +178,11 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
       (result) => {
         if (typeof result === 'string') {
           setCodeError(result);
-          setIsResendBlocked(result === 'limitExceeded');
+
+          // 차단은 시간이 지나거나 모달을 닫아야 풀리므로, 다른 결과로 해제하지 않습니다.
+          if (result === 'limitExceeded') {
+            setIsResendBlocked(true);
+          }
 
           // 서버가 새 인증코드를 보냈으므로 유효 시간을 다시 셉니다.
           if (result === 'reissued') {

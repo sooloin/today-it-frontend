@@ -199,6 +199,41 @@ export const ClearRequestErrorOnEdit: Story = {
   },
 };
 
+export const KeepResendBlockedAfterWrongCode: Story = {
+  args: {
+    api: {
+      ...createStorySignupApi({ delayMs: 0 }),
+      // 첫 발송은 성공하고, 재전송은 발송 횟수 제한(30분 차단)에 걸립니다.
+      requestCode: fn(async (_email: string, options?: { resend?: boolean }) =>
+        options?.resend ? ('limitExceeded' as const) : ('sent' as const),
+      ),
+      verifyCode: fn(async () => 'invalid' as const),
+    },
+  },
+  render,
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+
+    await agreeAndGoToEmail(dialog);
+    await userEvent.type(
+      await within(dialog).findByRole('textbox', { name: '이메일' }),
+      'user@test.com{Enter}',
+    );
+
+    const resend = await within(dialog).findByRole('button', { name: '재전송' });
+
+    await userEvent.click(resend);
+    await within(dialog).findByText(/발송 횟수를 초과했어요/);
+    await expect(resend).toBeDisabled();
+
+    // 틀린 코드를 입력하고 '다음'을 눌러도 30분 차단은 풀리지 않습니다.
+    await userEvent.type(within(dialog).getByRole('textbox', { name: '인증코드' }), '123456');
+    await userEvent.click(within(dialog).getByRole('button', { name: '다음' }));
+    await within(dialog).findByText('올바르지 않은 인증코드예요.');
+    await expect(resend).toBeDisabled();
+  },
+};
+
 export const IgnoreDuplicateClicks: Story = {
   args: {
     api: {
