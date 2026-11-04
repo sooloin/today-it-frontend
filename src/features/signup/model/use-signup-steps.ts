@@ -143,15 +143,16 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     void submit(
       () => api.requestCode(email, { resend: true }),
       (result) => {
-        if (result === 'tooSoon' || result === 'limitExceeded') {
+        if (result === 'limitExceeded') {
+          // 차단 안내는 codeError가 아니라 차단 상태에서 파생해 보여줍니다. 이전 코드 오류는 지웁니다.
+          setCodeError(undefined);
+          setIsResendBlocked(true);
+          return;
+        }
+
+        if (result === 'tooSoon') {
           // 코드 단계의 재전송 오류는 이전 코드 오류를 대체해 코드 오류 자리에 하나만 보여줍니다.
           setCodeError(result);
-
-          // 차단은 시간이 지나거나 모달을 닫아야 풀리므로, 다른 결과로 해제하지 않습니다.
-          if (result === 'limitExceeded') {
-            setIsResendBlocked(true);
-          }
-
           return;
         }
 
@@ -177,12 +178,14 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
       () => api.verifyCode(email, code),
       (result) => {
         if (typeof result === 'string') {
-          setCodeError(result);
-
-          // 차단은 시간이 지나거나 모달을 닫아야 풀리므로, 다른 결과로 해제하지 않습니다.
           if (result === 'limitExceeded') {
+            // 3회 실패 후 자동 재발송이 한도에 걸린 경우입니다. 차단 안내는 차단 상태에서 파생해 보여줍니다.
+            setCodeError(undefined);
             setIsResendBlocked(true);
+            return;
           }
+
+          setCodeError(result);
 
           // 서버가 새 인증코드를 보냈으므로 유효 시간을 다시 셉니다.
           if (result === 'reissued') {
@@ -283,7 +286,11 @@ export function useSignupSteps({ api, onComplete }: UseSignupStepsOptions) {
     agreedIds,
     email,
     emailError,
-    codeError: codeError ?? (isExpired ? ('expired' as const) : undefined),
+    // 재전송이 막혀 있는 동안에는 다른 오류가 없을 때 차단 안내를 보여줘서, 버튼이 비활성인 이유가 항상 보이게 합니다.
+    // 차단 해제와 안내 제거가 같은 상태(isResendBlocked)를 따르므로 서로 어긋나지 않습니다.
+    codeError:
+      codeError ??
+      (isResendBlocked ? ('limitExceeded' as const) : isExpired ? ('expired' as const) : undefined),
     timerSeconds: secondsLeft,
     nicknameStatus,
     passwordError,

@@ -267,10 +267,23 @@ export const KeepResendBlockedAfterWrongCode: Story = {
     await within(dialog).findByText(/발송 횟수를 초과했어요/);
     await expect(resend).toBeDisabled();
 
-    // 틀린 코드를 입력하고 '다음'을 눌러도 30분 차단은 풀리지 않습니다.
-    await userEvent.type(within(dialog).getByRole('textbox', { name: '인증코드' }), '123456');
+    // 코드를 입력해도 차단 중에는 재전송이 막힌 이유(안내 문구)가 계속 보입니다.
+    const code = within(dialog).getByRole('textbox', { name: '인증코드' });
+
+    await userEvent.type(code, '123456');
+    await expect(within(dialog).getByText(/발송 횟수를 초과했어요/)).toBeInTheDocument();
+    await expect(resend).toBeDisabled();
+
+    // 틀린 코드로 '다음'을 눌러도 30분 차단은 풀리지 않습니다.
     await userEvent.click(within(dialog).getByRole('button', { name: '다음' }));
     await within(dialog).findByText('올바르지 않은 인증코드예요.');
+    await expect(resend).toBeDisabled();
+
+    // 코드를 다시 고치면 불일치 문구는 사라지고 차단 안내가 다시 보입니다.
+    await userEvent.clear(code);
+    await userEvent.type(code, '1');
+    await expect(within(dialog).getByText(/발송 횟수를 초과했어요/)).toBeInTheDocument();
+    await expect(within(dialog).queryByText('올바르지 않은 인증코드예요.')).not.toBeInTheDocument();
     await expect(resend).toBeDisabled();
   },
 };
