@@ -19,7 +19,7 @@ export default async function CourseDetailPage({
   params: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await params;
-  const course = findCourseFixture(decodeURIComponent(courseId));
+  const course = findCourseFixture(courseId);
   if (!course) notFound();
 
   return (

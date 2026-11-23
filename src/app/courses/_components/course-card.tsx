@@ -8,11 +8,24 @@ import { cn } from '@/shared/lib';
 import { Icon, Tag } from '@/shared/ui';
 
 import {
+  type CoursePlace,
   type CourseSummary,
   formatCourseDate,
   getCourseCardPlaces,
   getCourseCardTags,
 } from '../_model/course';
+import {
+  COURSE_FRONT_POSITION,
+  COURSE_FRONT_ROTATE,
+  COURSE_PLACE_BADGE_POSITION,
+  type CourseCardPose,
+  getCoursePlaceLayer,
+  getCoursePlaceTransform,
+  HOVERED_PLACE_LIFT,
+  toCardTransform,
+  TOOLTIP_OFFSET_X,
+  TOOLTIP_OFFSET_Y,
+} from './course-card-layout';
 
 const compactCount = new Intl.NumberFormat('en-US', {
   notation: 'compact',
@@ -21,48 +34,15 @@ const compactCount = new Intl.NumberFormat('en-US', {
 const count = new Intl.NumberFormat('en-US');
 
 /**
- * 피그마 `Card/Course Card`(760×580)의 좌표입니다.
- * 회전값은 피그마(반시계 방향 양수)와 부호가 반대인 CSS 기준(시계 방향 양수)입니다.
+ * 어떤 동작으로 카드가 움직였는지 나타냅니다.
+ * 피그마 프로토타입 기준으로 스택 펼침은 300ms, 장소 강조는 200ms 동안 전환합니다.
  */
-const FRONT_ROTATE = -3;
-const FRONT_POSITION = {
-  default: { x: 144.3, y: 69.1 },
-  open: { x: 29.8, y: 61.1 },
-  inactive: { x: 212, y: 69.1 },
-} as const;
-const BADGE_POSITION = {
-  default: [
-    [498, 84],
-    [534, 86],
-    [568, 88],
-    [602, 88],
-    [636, 90],
-  ],
-  open: [
-    [448, 74],
-    [510, 82],
-    [572, 88],
-    [632, 96],
-    [692, 102],
-  ],
-} as const;
-/** 펼친 상태에서 마우스를 올린 장소 카드가 위로 올라오는 거리 */
-const HOVERED_PLACE_LIFT = 18;
-/** 툴팁 오른쪽 끝과 번호 배지 왼쪽 끝 사이 거리 */
-const TOOLTIP_OFFSET_X = 43;
-/** 툴팁 아래쪽 끝과 번호 배지 위쪽 끝 사이 거리 */
-const TOOLTIP_OFFSET_Y = 21;
+type CardTransition = 'stack' | 'place';
 
-/**
- * 장소 카드의 위치와 회전을 반환합니다.
- * @param index 방문 순서 (0부터 시작)
- * @param open 스택이 펼쳐졌는지 여부
- */
-function getPlaceTransform(index: number, open: boolean) {
-  return open
-    ? { x: 158 + 64 * index, y: 46 - 10 * index, rotate: 3 * (index + 1) }
-    : { x: 208 + 36 * index, y: 62 - 10 * index, rotate: 2 * (index + 1) };
-}
+const transitionDurationClassName: Record<CardTransition, string> = {
+  stack: 'duration-300',
+  place: 'duration-200',
+};
 
 export type CourseCardVariant = 'active' | 'inactive';
 
@@ -93,18 +73,24 @@ export function CourseCard({
   const [isPointerOver, setIsPointerOver] = useState(false);
   const [isFocusWithin, setIsFocusWithin] = useState(false);
   const [hoveredPlace, setHoveredPlace] = useState<number | null>(null);
-  const [motion, setMotion] = useState<'stack' | 'place'>('stack');
+  const [transition, setTransition] = useState<CardTransition>('stack');
   const placesId = useId();
   const isActive = variant === 'active';
   const isOpen = isActive && (isPointerOver || isFocusWithin);
+  const pose: CourseCardPose = isActive ? (isOpen ? 'open' : 'default') : 'inactive';
   const highlightedPlace = isOpen ? hoveredPlace : null;
   const cardPlaces = getCourseCardPlaces(course.places);
   const tags = getCourseCardTags(course);
   const date = formatCourseDate(course.publishedAt);
-  const front = FRONT_POSITION[isActive ? (isOpen ? 'open' : 'default') : 'inactive'];
 
   function handleBlur(event: FocusEvent<HTMLElement>) {
     if (!event.currentTarget.contains(event.relatedTarget)) setIsFocusWithin(false);
+  }
+
+  function highlightPlace(index: number | null) {
+    if (index !== null && !isOpen) return;
+    setTransition('place');
+    setHoveredPlace(index);
   }
 
   return (
@@ -117,11 +103,11 @@ export function CourseCard({
       onBlur={handleBlur}
       onFocus={() => setIsFocusWithin(true)}
       onMouseEnter={() => {
-        setMotion('stack');
+        setTransition('stack');
         setIsPointerOver(true);
       }}
       onMouseLeave={() => {
-        setMotion('stack');
+        setTransition('stack');
         setIsPointerOver(false);
         setHoveredPlace(null);
       }}
@@ -135,76 +121,24 @@ export function CourseCard({
         </p>
       ) : null}
 
-      {cardPlaces
-        .map((place, index) => {
-          const transform = getPlaceTransform(index, isOpen);
-          const lift = highlightedPlace === index ? HOVERED_PLACE_LIFT : 0;
-          const [badgeX, badgeY] = BADGE_POSITION[isOpen ? 'open' : 'default'][index] ?? [0, 0];
-
-          return (
-            <div aria-hidden="true" className="contents" key={place.id}>
-              <div
-                className={cn(
-                  'absolute top-0 left-0 w-place-card-width origin-top-left overflow-hidden rounded-xl bg-surface-default shadow-md ease-out motion-safe:transition-[transform,opacity]',
-                  motion === 'place' ? 'duration-200' : 'duration-300',
-                  !isActive && 'opacity-0',
-                )}
-                data-slot="course-card-place"
-                onMouseEnter={() => {
-                  if (!isOpen) return;
-                  setMotion('place');
-                  setHoveredPlace(index);
-                }}
-                onMouseLeave={() => {
-                  setMotion('place');
-                  setHoveredPlace(null);
-                }}
-                style={{
-                  transform: `translate(${transform.x}px, ${transform.y - lift}px) rotate(${transform.rotate}deg)`,
-                }}
-              >
-                <div className="relative h-place-card-thumbnail-height-lg w-full bg-surface-placeholder">
-                  {place.imageSrc ? (
-                    <Image
-                      alt=""
-                      className="object-cover"
-                      fill
-                      loading={eager ? 'eager' : 'lazy'}
-                      sizes="336px"
-                      src={place.imageSrc}
-                    />
-                  ) : null}
-                </div>
-                <div className="flex h-place-card-body-height min-w-0 flex-col items-start gap-8 px-20 pt-20 pb-24">
-                  <Tag type="category">{place.category}</Tag>
-                  <span className="w-full truncate text-heading-h3 text-text-primary">
-                    {place.name}
-                  </span>
-                  <span className="w-full truncate text-body-b3 text-text-secondary">
-                    {place.neighborhood}
-                  </span>
-                </div>
-              </div>
-              <span
-                className={cn(
-                  'pointer-events-none absolute top-0 left-0 flex size-28 items-center justify-center rounded-full bg-surface-inverse text-caption-c1 text-text-inverse shadow-sm ease-out motion-safe:transition-[transform,opacity]',
-                  motion === 'place' ? 'duration-200' : 'duration-300',
-                  isOpen ? 'opacity-100' : 'opacity-0',
-                )}
-                data-slot="course-card-order"
-                style={{ transform: `translate(${badgeX}px, ${badgeY - lift}px)` }}
-              >
-                {index + 1}
-              </span>
-            </div>
-          );
-        })
-        .reverse()}
+      {cardPlaces.map((place, index) => (
+        <CourseStackPlace
+          eager={eager}
+          index={index}
+          isLifted={highlightedPlace === index}
+          key={place.id}
+          onHoverChange={(hovered) => highlightPlace(hovered ? index : null)}
+          place={place}
+          pose={pose}
+          total={cardPlaces.length}
+          transition={transition}
+        />
+      ))}
 
       <div
-        className="absolute top-0 left-0 z-10 flex h-[458px] w-place-card-width origin-top-left flex-col rounded-xl bg-surface-default px-12 pt-12 pb-8 shadow-md ease-out motion-safe:transition-transform motion-safe:duration-300"
+        className="absolute top-0 left-0 z-20 flex h-[458px] w-place-card-width origin-top-left flex-col rounded-xl bg-surface-default px-12 pt-12 pb-8 shadow-md ease-out motion-safe:transition-transform motion-safe:duration-300"
         data-slot="course-card-front"
-        style={{ transform: `translate(${front.x}px, ${front.y}px) rotate(${FRONT_ROTATE}deg)` }}
+        style={{ transform: toCardTransform(COURSE_FRONT_POSITION[pose], COURSE_FRONT_ROTATE) }}
       >
         <div className="relative h-[268px] w-full shrink-0 overflow-hidden rounded-lg bg-surface-placeholder">
           {course.coverImageSrc ? (
@@ -244,6 +178,7 @@ export function CourseCard({
             <span className="text-caption-c2 text-text-tertiary">
               {date ? <time dateTime={course.publishedAt}>{date}</time> : null}
             </span>
+            {/* 피그마 좋아요 영역(아이콘 20px)보다 누르기 쉽도록 padding을 주고 같은 만큼 바깥 여백을 줄입니다. */}
             <button
               aria-label={`${course.title} 좋아요 ${count.format(course.likeCount)}개`}
               aria-pressed={liked}
@@ -265,29 +200,131 @@ export function CourseCard({
         </div>
       </div>
 
-      {cardPlaces.map((place, index) => {
-        const [badgeX, badgeY] = BADGE_POSITION.open[index] ?? [0, 0];
-        const isVisible = highlightedPlace === index;
-
-        return (
-          <div
-            aria-hidden="true"
-            className={cn(
-              'pointer-events-none absolute top-0 left-0 z-20 flex -translate-x-full -translate-y-full items-baseline gap-8 rounded-lg bg-surface-inverse px-12 py-8 whitespace-nowrap text-text-inverse shadow-sm motion-safe:transition-opacity motion-safe:duration-200',
-              isVisible ? 'opacity-100' : 'opacity-0',
-            )}
-            data-slot="course-card-tooltip"
-            key={place.id}
-            style={{
-              left: badgeX + TOOLTIP_OFFSET_X,
-              top: badgeY - HOVERED_PLACE_LIFT - TOOLTIP_OFFSET_Y,
-            }}
-          >
-            <span className="text-caption-c1 whitespace-pre">{`${index + 1}  ${place.name}`}</span>
-            <span className="text-caption-c2">{place.category}</span>
-          </div>
-        );
-      })}
+      {cardPlaces.map((place, index) => (
+        <CoursePlaceTooltip
+          index={index}
+          isVisible={highlightedPlace === index}
+          key={place.id}
+          place={place}
+        />
+      ))}
     </article>
+  );
+}
+
+interface CourseStackPlaceProps {
+  place: CoursePlace;
+  /** 방문 순서 (0부터 시작) */
+  index: number;
+  /** 표시하는 장소 수 */
+  total: number;
+  pose: CourseCardPose;
+  /** 마우스를 올려 위로 올라온 상태인지 여부 */
+  isLifted: boolean;
+  transition: CardTransition;
+  eager: boolean;
+  onHoverChange: (hovered: boolean) => void;
+}
+
+/** 코스 표지 뒤에 겹쳐 놓이는 장소 카드와 방문 순서 번호 배지입니다. */
+function CourseStackPlace({
+  place,
+  index,
+  total,
+  pose,
+  isLifted,
+  transition,
+  eager,
+  onHoverChange,
+}: CourseStackPlaceProps) {
+  const isOpen = pose === 'open';
+  const lift = isLifted ? HOVERED_PLACE_LIFT : 0;
+  const transform = getCoursePlaceTransform(index, isOpen);
+  const [badgeX, badgeY] = COURSE_PLACE_BADGE_POSITION[isOpen ? 'open' : 'default'][index] ?? [
+    0, 0,
+  ];
+  const layer = getCoursePlaceLayer(index, total);
+  const durationClassName = transitionDurationClassName[transition];
+
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        className={cn(
+          'absolute top-0 left-0 w-place-card-width origin-top-left overflow-hidden rounded-xl bg-surface-default shadow-md ease-out motion-safe:transition-[transform,opacity]',
+          durationClassName,
+          pose === 'inactive' && 'opacity-0',
+        )}
+        data-slot="course-card-place"
+        onMouseEnter={() => onHoverChange(true)}
+        onMouseLeave={() => onHoverChange(false)}
+        style={{
+          zIndex: layer.place,
+          transform: toCardTransform({ x: transform.x, y: transform.y - lift }, transform.rotate),
+        }}
+      >
+        <div className="relative h-place-card-thumbnail-height-lg w-full bg-surface-placeholder">
+          {place.imageSrc ? (
+            <Image
+              alt=""
+              className="object-cover"
+              fill
+              loading={eager ? 'eager' : 'lazy'}
+              sizes="336px"
+              src={place.imageSrc}
+            />
+          ) : null}
+        </div>
+        <div className="flex h-place-card-body-height min-w-0 flex-col items-start gap-8 px-20 pt-20 pb-24">
+          <Tag type="category">{place.category}</Tag>
+          <span className="w-full truncate text-heading-h3 text-text-primary">{place.name}</span>
+          <span className="w-full truncate text-body-b3 text-text-secondary">
+            {place.neighborhood}
+          </span>
+        </div>
+      </div>
+      <span
+        aria-hidden="true"
+        className={cn(
+          'pointer-events-none absolute top-0 left-0 flex size-28 items-center justify-center rounded-full bg-surface-inverse text-caption-c1 text-text-inverse shadow-sm ease-out motion-safe:transition-[transform,opacity]',
+          durationClassName,
+          isOpen ? 'opacity-100' : 'opacity-0',
+        )}
+        data-slot="course-card-order"
+        style={{ zIndex: layer.badge, transform: `translate(${badgeX}px, ${badgeY - lift}px)` }}
+      >
+        {index + 1}
+      </span>
+    </>
+  );
+}
+
+interface CoursePlaceTooltipProps {
+  place: CoursePlace;
+  /** 방문 순서 (0부터 시작) */
+  index: number;
+  isVisible: boolean;
+}
+
+/** 펼친 상태에서 마우스를 올린 장소의 이름과 카테고리를 번호 배지 위에 보여 줍니다. */
+function CoursePlaceTooltip({ place, index, isVisible }: CoursePlaceTooltipProps) {
+  const [badgeX, badgeY] = COURSE_PLACE_BADGE_POSITION.open[index] ?? [0, 0];
+
+  return (
+    <div
+      aria-hidden="true"
+      className={cn(
+        'pointer-events-none absolute top-0 left-0 z-30 flex -translate-x-full -translate-y-full items-baseline gap-8 rounded-lg bg-surface-inverse px-12 py-8 whitespace-nowrap text-text-inverse shadow-sm motion-safe:transition-opacity motion-safe:duration-200',
+        isVisible ? 'opacity-100' : 'opacity-0',
+      )}
+      data-slot="course-card-tooltip"
+      style={{
+        left: badgeX + TOOLTIP_OFFSET_X,
+        top: badgeY - HOVERED_PLACE_LIFT - TOOLTIP_OFFSET_Y,
+      }}
+    >
+      <span className="text-caption-c1 whitespace-pre">{`${index + 1}  ${place.name}`}</span>
+      <span className="text-caption-c2">{place.category}</span>
+    </div>
   );
 }

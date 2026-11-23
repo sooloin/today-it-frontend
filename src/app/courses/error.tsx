@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 
-import { CourseFilterBar } from './_components/course-filter-bar';
 import { CourseHomeErrorState } from './_components/course-home-error-state';
 import { CoursesTopHeader } from './_components/courses-top-header';
 
@@ -18,7 +17,7 @@ export default function CoursesError({ error, retry }: CoursesErrorProps) {
 
   return (
     <>
-      <CoursesTopHeader searchFilter={<CourseFilterBar />} />
+      <CoursesTopHeader />
       <CourseHomeErrorState onRetry={retry} />
     </>
   );

@@ -9,6 +9,7 @@ import {
 import {
   canChangeCourseHomeSort,
   getCarouselOffset,
+  getCourseHomeCourses,
   getCourseHomeNotice,
   getCourseHomeSortLabel,
   getCourseViewer,
@@ -77,6 +78,17 @@ describe('코스 홈 사용자 상태', () => {
     expect(getCourseHomeNotice('member')).toBeNull();
     expect(canChangeCourseHomeSort('member')).toBe(true);
     expect(getDefaultCourseHomeSort('member')).toBe('recommended');
+  });
+
+  it('추천 목록은 취향을 설정한 회원의 추천 정렬에서만 보여 준다', () => {
+    const lists = { recommended: 'recommended-list', popular: 'popular-list' };
+
+    expect(getCourseHomeCourses('member', 'recommended', lists)).toBe('recommended-list');
+    expect(getCourseHomeCourses('member', 'popular', lists)).toBe('popular-list');
+    expect(getCourseHomeCourses('member-without-preference', 'recommended', lists)).toBe(
+      'popular-list',
+    );
+    expect(getCourseHomeCourses('guest', 'recommended', lists)).toBe('popular-list');
   });
 
   it('정렬 기준을 확인하고 제목을 반환한다', () => {

@@ -1,13 +1,16 @@
 import { Skeleton } from '@/shared/ui';
 
 import type { CourseCardVariant } from './course-card';
+import {
+  COURSE_FRONT_POSITION,
+  COURSE_FRONT_ROTATE,
+  getCoursePlaceLayer,
+  getCoursePlaceTransform,
+  toCardTransform,
+} from './course-card-layout';
 
-/** 피그마 `State=Loading` 변형의 장소 카드 좌표입니다. CSS 회전 방향 기준입니다. */
-const PLACE_SKELETONS = [
-  { x: 280, y: 42, rotate: 6 },
-  { x: 244, y: 52, rotate: 4 },
-  { x: 208, y: 62, rotate: 2 },
-] as const;
+/** 피그마 `State=Loading` 변형은 장소 카드 3장을 기본 위치에 겹쳐 보여 줍니다. */
+const SKELETON_PLACE_COUNT = 3;
 
 interface CourseCardSkeletonProps {
   /** `inactive`는 캐러셀 양옆 미리보기 위치의 로딩 카드입니다. (기본값: `active`) */
@@ -26,22 +29,30 @@ export function CourseCardSkeleton({ variant = 'active' }: CourseCardSkeletonPro
       data-variant={variant}
     >
       {isActive
-        ? PLACE_SKELETONS.map((place) => (
-            <div
-              className="absolute top-0 left-0 h-[460px] w-place-card-width origin-top-left overflow-hidden rounded-xl bg-surface-default shadow-md"
-              key={place.rotate}
-              style={{
-                transform: `translate(${place.x}px, ${place.y}px) rotate(${place.rotate}deg)`,
-              }}
-            >
-              <Skeleton className="h-place-card-thumbnail-height-lg w-full" />
-            </div>
-          ))
+        ? Array.from({ length: SKELETON_PLACE_COUNT }, (_, index) => {
+            const transform = getCoursePlaceTransform(index, false);
+
+            return (
+              <div
+                className="absolute top-0 left-0 h-[460px] w-place-card-width origin-top-left overflow-hidden rounded-xl bg-surface-default shadow-md"
+                key={index}
+                style={{
+                  zIndex: getCoursePlaceLayer(index, SKELETON_PLACE_COUNT).place,
+                  transform: toCardTransform(transform, transform.rotate),
+                }}
+              >
+                <Skeleton className="h-place-card-thumbnail-height-lg w-full" />
+              </div>
+            );
+          })
         : null}
       <div
-        className="absolute top-0 left-0 z-10 flex h-[458px] w-place-card-width origin-top-left flex-col rounded-xl bg-surface-default p-20 shadow-md"
+        className="absolute top-0 left-0 z-20 flex h-[458px] w-place-card-width origin-top-left flex-col rounded-xl bg-surface-default p-20 shadow-md"
         style={{
-          transform: `translate(${isActive ? 144.3 : 212}px, 69.1px) rotate(-3deg)`,
+          transform: toCardTransform(
+            COURSE_FRONT_POSITION[isActive ? 'default' : 'inactive'],
+            COURSE_FRONT_ROTATE,
+          ),
         }}
       >
         <Skeleton className="h-[270px] w-full shrink-0 rounded-2xl" />

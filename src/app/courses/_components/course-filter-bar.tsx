@@ -17,7 +17,8 @@ export function CourseFilterBar() {
       role="group"
     >
       {courseFilterLabels.map((label) => (
-        <FilterTab key={label} label={label} pressed={false} />
+        // 패널이 연결되기 전까지 눌러도 바뀌지 않으므로 보조 기술에도 사용할 수 없다고 알립니다.
+        <FilterTab aria-disabled="true" key={label} label={label} pressed={false} />
       ))}
     </div>
   );

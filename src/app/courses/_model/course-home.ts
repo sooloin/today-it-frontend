@@ -65,6 +65,23 @@ export function getDefaultCourseHomeSort(viewer: CourseViewer): CourseHomeSort {
 }
 
 /**
+ * 사용자 상태와 정렬 기준에 맞는 코스 목록을 고릅니다.
+ *
+ * 추천 목록은 취향을 설정한 회원에게만 보여 줍니다. 비회원과 취향 미설정 회원은
+ * 추천 정렬이어도 인기 코스를 봅니다.
+ * @param viewer 코스 홈을 보는 사용자 상태
+ * @param sort 코스 홈 정렬 기준
+ * @param lists 추천순·인기순 코스 목록
+ */
+export function getCourseHomeCourses<T>(
+  viewer: CourseViewer,
+  sort: CourseHomeSort,
+  lists: { recommended: T; popular: T },
+) {
+  return viewer === 'member' && sort === 'recommended' ? lists.recommended : lists.popular;
+}
+
+/**
  * 정렬 기준에 맞는 섹션 제목을 반환합니다.
  * @param sort 코스 홈 정렬 기준
  */
