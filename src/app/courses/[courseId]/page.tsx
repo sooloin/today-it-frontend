@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { TopHeader } from '@/app/_components/top-header';
 import { ButtonLink } from '@/shared/ui';
 
+import { CoursesTopHeader } from '../_components/courses-top-header';
 import { findCourseFixture } from '../_model/courses.fixtures';
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default async function CourseDetailPage({
 
   return (
     <>
-      <TopHeader activeSection="courses" auth="guest" />
+      <CoursesTopHeader />
       <main
         className="mx-auto flex w-full max-w-[calc(var(--spacing-header-width)+48px)] flex-1 flex-col items-center gap-24 px-24 pt-48 pb-96 text-center"
         data-slot="course-detail-placeholder"

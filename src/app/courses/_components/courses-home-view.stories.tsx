@@ -112,6 +112,49 @@ export const MemberLikeToggle: Story = {
   },
 };
 
+const sessionMember = {
+  memberId: 'story-member',
+  nickname: '오늘잇',
+  coupleConnected: false,
+  roles: ['USER'],
+};
+
+/** 로그인 세션이 있으면 헤더에 닉네임이 보이고 추천 코스로 시작합니다. */
+export const SessionMember: Story = {
+  args: { viewer: undefined },
+  beforeEach: () => {
+    localStorage.setItem('member', JSON.stringify(sessionMember));
+    return () => localStorage.removeItem('member');
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitFor(() =>
+      expect(canvas.getByRole('group', { name: '프로필: 오늘잇' })).toBeInTheDocument(),
+    );
+    await expect(canvas.getByRole('combobox', { name: /코스 정렬 바꾸기/ })).toBeInTheDocument();
+    await expect(
+      canvas.queryByText('로그인하면 취향에 맞는 코스를 추천해 드려요'),
+    ).not.toBeInTheDocument();
+  },
+};
+
+/** 로그인 세션이 없으면 로그인 버튼과 비회원 안내를 봅니다. */
+export const SessionGuest: Story = {
+  args: { viewer: undefined },
+  beforeEach: () => {
+    localStorage.removeItem('member');
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole('button', { name: '로그인' })).toBeInTheDocument();
+    await expect(
+      canvas.getByText('로그인하면 취향에 맞는 코스를 추천해 드려요'),
+    ).toBeInTheDocument();
+  },
+};
+
 export const Loading: Story = {
   render: () => <CourseHomeLoadingView viewer="member" />,
 };

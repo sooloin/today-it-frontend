@@ -11,15 +11,11 @@ export const metadata: Metadata = {
 /**
  * 코스 홈입니다.
  *
- * 로그인 상태 연동 전까지 장소 화면과 같이 비회원 화면을 보여 줍니다.
- * 회원·취향 미설정 화면은 Storybook `App/Courses/CoursesHomeView`에서 확인합니다.
+ * 로그인 세션에 따라 비회원·회원 화면을 보여 줍니다.
+ * 취향 미설정 화면은 취향 정보 연동 전까지 Storybook `App/Courses/CoursesHomeView`에서 확인합니다.
  */
 export default function CoursesPage() {
   return (
-    <CoursesHomeView
-      popularCourses={popularCourses}
-      recommendedCourses={recommendedCourses}
-      viewer="guest"
-    />
+    <CoursesHomeView popularCourses={popularCourses} recommendedCourses={recommendedCourses} />
   );
 }

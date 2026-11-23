@@ -38,6 +38,17 @@ export function getCourseHomeNotice(viewer: CourseViewer): CourseHomeNotice | nu
 }
 
 /**
+ * 로그인 여부로 코스 화면의 사용자 상태를 정합니다.
+ *
+ * 로그인 응답에는 취향 설정 여부가 없어서 로그인한 회원은 `member`로 봅니다.
+ * 취향 미설정(`member-without-preference`)은 회원 취향 정보를 받을 수 있게 되면 연결합니다.
+ * @param isLoggedIn 로그인한 회원 정보가 있는지 여부
+ */
+export function getCourseViewer(isLoggedIn: boolean): CourseViewer {
+  return isLoggedIn ? 'member' : 'guest';
+}
+
+/**
  * 비회원은 정렬을 바꿀 수 없고 인기 코스만 봅니다.
  * @param viewer 코스 홈을 보는 사용자 상태
  */

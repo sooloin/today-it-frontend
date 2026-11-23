@@ -11,6 +11,7 @@ import {
   getCarouselOffset,
   getCourseHomeNotice,
   getCourseHomeSortLabel,
+  getCourseViewer,
   getDefaultCourseHomeSort,
   isCourseHomeSort,
   wrapCarouselIndex,
@@ -51,6 +52,11 @@ describe('코스 카드 표시 값', () => {
 });
 
 describe('코스 홈 사용자 상태', () => {
+  it('로그인 세션이 있으면 회원, 없으면 비회원으로 본다', () => {
+    expect(getCourseViewer(true)).toBe('member');
+    expect(getCourseViewer(false)).toBe('guest');
+  });
+
   it('비회원은 로그인 안내를 보고 정렬을 바꿀 수 없으며 인기 코스로 시작한다', () => {
     expect(getCourseHomeNotice('guest')).toEqual({
       message: '로그인하면 취향에 맞는 코스를 추천해 드려요',
