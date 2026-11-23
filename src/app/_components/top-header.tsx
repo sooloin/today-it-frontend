@@ -21,6 +21,8 @@ export interface TopHeaderProps {
   navigation?: HeaderNavigation;
   /** 헤더나 스크롤 검색 영역에 표시할 검색 요소 */
   searchContent?: ReactNode;
+  /** 탭 내비게이션 형태에서 검색창 아래에 표시할 필터 바 */
+  searchFilter?: ReactNode;
 }
 
 /**
@@ -34,6 +36,7 @@ export function TopHeader({
   nickname = '닉네임',
   navigation = 'tabs',
   searchContent,
+  searchFilter,
 }: TopHeaderProps) {
   if (navigation === 'search') {
     return (
@@ -75,7 +78,7 @@ export function TopHeader({
         </div>
       </div>
       <div aria-hidden="true" className="h-header-height w-full shrink-0" />
-      <ScrollSearchArea>{searchContent}</ScrollSearchArea>
+      <ScrollSearchArea filterBar={searchFilter}>{searchContent}</ScrollSearchArea>
     </header>
   );
 }
