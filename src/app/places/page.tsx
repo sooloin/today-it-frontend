@@ -4,9 +4,8 @@ import { PlaceCollectionView } from './_components/place-collection-view';
 import { PlaceListEmptyState } from './_components/place-list-empty-state';
 import { PlaceRecommendationSection } from './_components/place-recommendation-section';
 import { PlacesPageClient } from './_components/places-page-client';
-import { normalizePlaceFilters } from './_model/place-filters';
+import { normalizePlaceFilters, normalizePlaceSort } from './_model/place-filters';
 import { findPlaceSection, placeSections } from './_model/place-sections';
-import { allPlaces } from './_model/recommended-places';
 
 export const metadata: Metadata = {
   title: '장소 목록 | ToDayIt',
@@ -27,7 +26,8 @@ export default async function PlacesPage({
   const filters = normalizePlaceFilters(params);
   const hasFilters = Boolean(filters.regions.length || filters.conceptIds.length);
   const isSearchMode = Boolean(query || hasFilters);
-  const routeKey = JSON.stringify([query, filters]);
+  const sort = normalizePlaceSort(params.sort);
+  const routeKey = JSON.stringify([query, filters, sort]);
   const hasPlaces = selectedSection
     ? selectedSection.places.length > 0
     : placeSections.some((section) => section.places.length > 0);
@@ -35,10 +35,10 @@ export default async function PlacesPage({
   return (
     <PlacesPageClient
       key={routeKey}
-      allPlaces={allPlaces}
       initialFilters={filters}
       filterParams={params}
       initialQuery={query}
+      sort={sort}
     >
       {selectedSection && !isSearchMode ? (
         <PlaceCollectionView key={selectedSection.id} section={selectedSection} />
