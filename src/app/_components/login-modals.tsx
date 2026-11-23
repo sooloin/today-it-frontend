@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 
+import { useSessionStore } from '@/app/_model/session-store';
 import {
   login,
   LoginStep,
@@ -9,17 +10,37 @@ import {
   type LoginSubmitResult,
   type LoginValues,
 } from '@/features/login';
-import { SignupModal } from '@/features/signup';
+import { parseAgreedIds, SignupModal, type SignupSocialSession } from '@/features/signup';
+import { type SocialSignupRequest, startSocialLogin } from '@/features/social-login';
 import { Logo, Modal } from '@/shared/ui';
 
 interface LoginModalsProps {
   onCloseComplete: () => void;
   onComplete?: () => void;
   onPasswordReset?: LoginStepProps['onPasswordReset'];
+  /** 소셜 인증을 마치고 가입만 남은 사용자의 정보. 주면 회원가입 모달부터 엽니다. */
+  socialSignup?: SocialSignupRequest;
 }
 
-export function LoginModals({ onCloseComplete, onComplete, onPasswordReset }: LoginModalsProps) {
-  const [activeModal, setActiveModal] = useState<'login' | 'signup' | null>('login');
+export function LoginModals({
+  onCloseComplete,
+  onComplete,
+  onPasswordReset,
+  socialSignup,
+}: LoginModalsProps) {
+  const loadStoredMember = useSessionStore((state) => state.loadStoredMember);
+  const [social] = useState<SignupSocialSession | undefined>(() =>
+    socialSignup
+      ? {
+          provider: socialSignup.provider === 'google' ? 'GOOGLE' : 'KAKAO',
+          signupToken: socialSignup.signupToken,
+          agreedIds: parseAgreedIds(socialSignup.agreedIds),
+        }
+      : undefined,
+  );
+  const [activeModal, setActiveModal] = useState<'login' | 'signup' | null>(
+    socialSignup ? 'signup' : 'login',
+  );
   const nextModalRef = useRef<'login' | 'signup' | null>(null);
   const [result, setResult] = useState<LoginSubmitResult>();
   const openCycleRef = useRef(0);
@@ -62,6 +83,10 @@ export function LoginModals({ onCloseComplete, onComplete, onPasswordReset }: Lo
 
       if (nextResult.status === 'success') {
         localStorage.setItem('accessToken', nextResult.accessToken);
+        localStorage.setItem('refreshToken', nextResult.refreshToken);
+        localStorage.setItem('expiresIn', String(nextResult.expiresIn));
+        localStorage.setItem('member', JSON.stringify(nextResult.member));
+        loadStoredMember();
         handleOpenChange(false);
         onComplete?.();
       } else if (nextResult.status === 'locked') {
@@ -85,9 +110,15 @@ export function LoginModals({ onCloseComplete, onComplete, onPasswordReset }: Lo
       <SignupModal
         loginHref="/login"
         onCloseComplete={handleCloseComplete}
+        onComplete={
+          // 가입 응답에 토큰이 없어 로그인을 한 번 더 요청합니다.
+          socialSignup ? () => startSocialLogin(socialSignup.provider) : onComplete
+        }
         onLogin={() => switchModal('login')}
         onOpenChange={(open) => setActiveModal(open ? 'signup' : null)}
+        onSocialLogin={(provider, agreedIds) => startSocialLogin(provider, agreedIds)}
         open={activeModal === 'signup'}
+        social={social}
       />
       <Modal
         logo={<Logo />}
@@ -107,6 +138,7 @@ export function LoginModals({ onCloseComplete, onComplete, onPasswordReset }: Lo
           }
           onPasswordReset={() => onPasswordReset?.()}
           onSignup={() => switchModal('signup')}
+          onSocialLogin={(provider) => startSocialLogin(provider)}
           onSubmit={handleSubmit}
         />
       </Modal>
