@@ -26,8 +26,13 @@ export function CoursesTopHeader({ viewer: viewerOverride }: CoursesTopHeaderPro
       activeSection="courses"
       auth={viewer === 'guest' ? 'guest' : 'member'}
       nickname={nickname}
-      searchContent={<SearchBar className="w-full" placeholder="검색어를 입력해주세요" />}
-      searchFilter={<CourseFilterBar />}
+      hasFilters
+      searchContent={
+        <div className="flex w-full max-w-search-bar-width flex-col gap-12">
+          <SearchBar className="w-full" placeholder="검색어를 입력해주세요" />
+          <CourseFilterBar />
+        </div>
+      }
     />
   );
 }
